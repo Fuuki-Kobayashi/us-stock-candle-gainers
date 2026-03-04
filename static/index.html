@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Stock Candle Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+        .scrollbar-thin::-webkit-scrollbar { height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #1e2538; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-[#0a0e1a] text-slate-100 min-h-screen">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-[#0a0e1a]/80 z-50 flex items-center justify-center hidden">
+        <div class="text-center">
+            <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-xl text-slate-200 font-bold">分析中...</p>
+            <p class="text-slate-400 mt-1">データを取得しています</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+
+        <!-- Header -->
+        <header class="text-center mb-2">
+            <h1 class="text-3xl font-bold text-slate-100">US Stock Candle Analysis</h1>
+            <p class="text-slate-400 mt-1">ローソク足パターン認識 &amp; リスク分析ツール</p>
+        </header>
+
+        <!-- Input Form -->
+        <section class="bg-[#1e2538] rounded-xl p-6">
+            <div class="space-y-4">
+                <!-- Ticker -->
+                <div>
+                    <label for="ticker" class="block text-sm font-medium text-slate-400 mb-1">ティッカーシンボル</label>
+                    <input type="text" id="ticker" placeholder="例: AAPL, TSLA, GME"
+                        class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-3 text-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 uppercase"
+                        style="text-transform: uppercase;">
+                </div>
+                <!-- Day Inputs -->
+                <div class="grid sm:grid-cols-3 gap-4">
+                    <div>
+                        <label for="day1" class="block text-sm font-medium text-slate-400 mb-1">Day1 変化率 (%)</label>
+                        <input type="number" step="0.1" id="day1" placeholder="例: 5.2"
+                            class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="day2" class="block text-sm font-medium text-slate-400 mb-1">Day2 変化率 (%)</label>
+                        <input type="number" step="0.1" id="day2" placeholder="例: -3.1"
+                            class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="day3" class="block text-sm font-medium text-slate-400 mb-1">Day3 変化率 (%)</label>
+                        <input type="number" step="0.1" id="day3" placeholder="例: 2.0"
+                            class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                </div>
+                <!-- Mode Badge + Button -->
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <span id="mode-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
+                        リアルデータモード
+                    </span>
+                    <button id="analyze-btn" onclick="analyze()"
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg px-8 py-3 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#1e2538]">
+                        分析する
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Container -->
+        <div id="error-container" class="hidden">
+            <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p id="error-message" class="text-red-400"></p>
+                </div>
+                <button onclick="hideError()" class="text-red-400 hover:text-red-300 flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-20">
+            <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+            </svg>
+            <p class="text-slate-400 text-lg">ティッカーシンボルを入力して分析を開始してください</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden space-y-6">
+
+            <!-- Mode Bar -->
+            <div id="mode-bar" class="bg-[#1e2538] rounded-lg px-5 py-3 flex items-center gap-3">
+                <span id="mode-bar-ticker" class="text-xl font-bold text-slate-100"></span>
+                <span class="text-slate-500">-</span>
+                <span id="mode-bar-text" class="text-slate-400"></span>
+            </div>
+
+            <!-- Candle Table + Short Interest -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+                <!-- Candle Table (3/5) -->
+                <div class="lg:col-span-3 bg-[#1e2538] rounded-xl p-5">
+                    <h2 class="text-lg font-bold text-slate-200 mb-4">ローソク足データ</h2>
+                    <div class="overflow-x-auto scrollbar-thin">
+                        <table id="candle-table" class="w-full text-sm">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-700">
+                                    <th class="text-left py-2 px-3 font-medium">日付</th>
+                                    <th class="text-right py-2 px-3 font-medium">始値</th>
+                                    <th class="text-right py-2 px-3 font-medium">高値</th>
+                                    <th class="text-right py-2 px-3 font-medium">安値</th>
+                                    <th class="text-right py-2 px-3 font-medium">終値</th>
+                                    <th class="text-right py-2 px-3 font-medium">出来高</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candle-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Short Interest (2/5) -->
+                <div id="short-interest-section" class="lg:col-span-2 bg-[#1e2538] rounded-xl p-5">
+                    <h2 class="text-lg font-bold text-slate-200 mb-4">空売りデータ</h2>
+                    <div id="short-interest-grid" class="grid grid-cols-2 gap-4"></div>
+                    <div id="atr-section" class="mt-4 pt-4 border-t border-slate-700"></div>
+                </div>
+            </div>
+
+            <!-- Patterns Section -->
+            <div id="patterns-container" class="bg-[#1e2538] rounded-xl p-5">
+                <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+                    <h2 class="text-lg font-bold text-slate-200">検出パターン</h2>
+                    <div class="flex gap-2">
+                        <button id="pattern-filter-all" onclick="filterPatterns('all')"
+                            class="px-3 py-1 rounded-lg text-sm font-medium bg-blue-500 text-white transition-colors">全て</button>
+                        <button id="pattern-filter-confirmed" onclick="filterPatterns('confirmed')"
+                            class="px-3 py-1 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">確定</button>
+                        <button id="pattern-filter-predicted" onclick="filterPatterns('predicted')"
+                            class="px-3 py-1 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">予測</button>
+                    </div>
+                </div>
+                <div id="patterns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <div id="patterns-empty" class="hidden text-center py-8 text-slate-500">パターンは検出されませんでした</div>
+            </div>
+
+            <!-- Risk Analysis -->
+            <div id="risk-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+
+            <!-- Save Button -->
+            <div class="text-center">
+                <button id="save-btn" onclick="saveImage()"
+                    class="bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg px-6 py-3 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500">
+                    画像として保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- State ---
+    let currentTicker = '';
+    let errorTimeout = null;
+
+    // --- Mode Badge Update ---
+    function updateModeBadge() {
+        const badge = document.getElementById('mode-badge');
+        const d1 = document.getElementById('day1').value.trim();
+        const d2 = document.getElementById('day2').value.trim();
+        const d3 = document.getElementById('day3').value.trim();
+
+        if (d1 !== '' && d2 !== '' && d3 !== '') {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400';
+            badge.textContent = 'シミュレーション（確定）モード';
+        } else if (d1 !== '' && d2 !== '') {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-500/20 text-purple-400';
+            badge.textContent = 'シミュレーション（予測）モード';
+        } else {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400';
+            badge.textContent = 'リアルデータモード';
+        }
+    }
+
+    document.getElementById('day1').addEventListener('input', updateModeBadge);
+    document.getElementById('day2').addEventListener('input', updateModeBadge);
+    document.getElementById('day3').addEventListener('input', updateModeBadge);
+
+    // Enter key triggers analysis
+    document.querySelectorAll('#ticker, #day1, #day2, #day3').forEach(el => {
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') analyze();
+        });
+    });
+
+    // --- Utility Functions ---
+    function formatPrice(val) {
+        if (val == null) return 'N/A';
+        return '$' + Number(val).toFixed(2);
+    }
+
+    function formatVolume(vol) {
+        if (vol === 0) return '-';
+        if (vol >= 1e9) return (vol / 1e9).toFixed(1) + 'B';
+        if (vol >= 1e6) return (vol / 1e6).toFixed(1) + 'M';
+        if (vol >= 1e3) return (vol / 1e3).toFixed(1) + 'K';
+        return vol.toString();
+    }
+
+    function formatNumber(val) {
+        if (val == null) return 'N/A';
+        if (typeof val === 'number') {
+            if (val >= 1e9) return (val / 1e9).toFixed(2) + 'B';
+            if (val >= 1e6) return (val / 1e6).toFixed(2) + 'M';
+            if (val >= 1e3) return (val / 1e3).toFixed(1) + 'K';
+            return val.toLocaleString();
+        }
+        return val;
+    }
+
+    function riskBadge(level) {
+        if (!level) return '';
+        const map = {
+            '低': 'bg-green-500/20 text-green-400 border border-green-500/30',
+            '中': 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+            '高': 'bg-red-500/20 text-red-400 border border-red-500/30',
+        };
+        const cls = map[level] || 'bg-slate-700 text-slate-400';
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}">${level}</span>`;
+    }
+
+    // --- Show / Hide Helpers ---
+    function showLoading() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    function showError(msg) {
+        hideError();
+        const container = document.getElementById('error-container');
+        document.getElementById('error-message').textContent = msg;
+        container.classList.remove('hidden');
+        errorTimeout = setTimeout(() => hideError(), 8000);
+    }
+
+    function hideError() {
+        document.getElementById('error-container').classList.add('hidden');
+        if (errorTimeout) { clearTimeout(errorTimeout); errorTimeout = null; }
+    }
+
+    // --- Pattern Filter ---
+    let activeFilter = 'all';
+
+    function filterPatterns(type) {
+        activeFilter = type;
+        const buttons = {
+            all: document.getElementById('pattern-filter-all'),
+            confirmed: document.getElementById('pattern-filter-confirmed'),
+            predicted: document.getElementById('pattern-filter-predicted'),
+        };
+        Object.entries(buttons).forEach(([key, btn]) => {
+            if (key === type) {
+                btn.className = 'px-3 py-1 rounded-lg text-sm font-medium bg-blue-500 text-white transition-colors';
+            } else {
+                btn.className = 'px-3 py-1 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors';
+            }
+        });
+
+        document.querySelectorAll('#patterns-grid .pattern-card').forEach(card => {
+            if (type === 'all') {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.toggle('hidden', card.dataset.type !== type);
+            }
+        });
+
+        // Check if all visible
+        const visibleCards = document.querySelectorAll('#patterns-grid .pattern-card:not(.hidden)');
+        document.getElementById('patterns-empty').classList.toggle('hidden', visibleCards.length > 0);
+    }
+
+    // --- Main Analysis ---
+    async function analyze() {
+        const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+        if (!ticker) {
+            showError('ティッカーシンボルを入力してください。');
+            return;
+        }
+
+        currentTicker = ticker;
+        hideError();
+        showLoading();
+
+        const analyzeBody = { ticker };
+        const day1 = document.getElementById('day1').value;
+        const day2 = document.getElementById('day2').value;
+        const day3 = document.getElementById('day3').value;
+        if (day1 !== '') analyzeBody.change1 = parseFloat(day1);
+        if (day2 !== '') analyzeBody.change2 = parseFloat(day2);
+        if (day3 !== '') analyzeBody.change3 = parseFloat(day3);
+
+        try {
+            const [analyzeRes, riskRes] = await Promise.all([
+                fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(analyzeBody),
+                }),
+                fetch('/risk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticker }),
+                }),
+            ]);
+
+            if (!analyzeRes.ok) {
+                const err = await analyzeRes.json();
+                throw new Error(err.detail || 'Analysis failed');
+            }
+
+            const analyzeData = await analyzeRes.json();
+            let riskData = null;
+            if (riskRes.ok) {
+                riskData = await riskRes.json();
+            }
+
+            renderResults(analyzeData, riskData);
+        } catch (e) {
+            showError(e.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // --- Render Results ---
+    function renderResults(data, riskData) {
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('results-section').classList.remove('hidden');
+
+        // Mode bar
+        document.getElementById('mode-bar-ticker').textContent = currentTicker;
+        const mode = data.mode || 'real';
+        const modeTextMap = {
+            realdata: 'リアルデータ分析',
+            simulation_confirmed: 'シミュレーション（確定）分析',
+            simulation_predicted: 'シミュレーション（予測）分析',
+        };
+        document.getElementById('mode-bar-text').textContent = modeTextMap[mode] || mode;
+
+        // Candle table
+        renderCandleTable(data.candles || []);
+
+        // Short interest
+        renderShortInterest(data.short_interest, data.atr);
+
+        // Patterns
+        renderPatterns(data.patterns || []);
+
+        // Risk analysis
+        renderRisk(riskData);
+    }
+
+    // --- Candle Table ---
+    function renderCandleTable(candles) {
+        const tbody = document.getElementById('candle-tbody');
+        tbody.innerHTML = '';
+
+        candles.forEach(c => {
+            const bullish = c.close >= c.open;
+            const borderClass = bullish ? 'border-l-2 border-green-500' : 'border-l-2 border-red-500';
+            const closeClass = bullish ? 'text-green-400' : 'text-red-400';
+
+            const tr = document.createElement('tr');
+            tr.className = `${borderClass} border-b border-slate-700/50 hover:bg-[#252d42] transition-colors`;
+            tr.innerHTML = `
+                <td class="py-2 px-3 text-slate-300">${c.date || ''}</td>
+                <td class="py-2 px-3 text-right text-slate-300">${formatPrice(c.open)}</td>
+                <td class="py-2 px-3 text-right text-slate-300">${formatPrice(c.high)}</td>
+                <td class="py-2 px-3 text-right text-slate-300">${formatPrice(c.low)}</td>
+                <td class="py-2 px-3 text-right font-medium ${closeClass}">${formatPrice(c.close)}</td>
+                <td class="py-2 px-3 text-right text-slate-400">${formatVolume(c.volume)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- Short Interest ---
+    function renderShortInterest(si, atr) {
+        const grid = document.getElementById('short-interest-grid');
+        const atrSection = document.getElementById('atr-section');
+
+        if (!si) {
+            grid.innerHTML = '<p class="col-span-2 text-slate-500 text-center py-4">データなし</p>';
+            atrSection.innerHTML = '';
+            return;
+        }
+
+        const shortPct = si.short_percent_of_float;
+        let riskLevel = '低';
+        if (shortPct != null) {
+            if (shortPct >= 20) riskLevel = '高';
+            else if (shortPct >= 10) riskLevel = '中';
+        }
+
+        const metrics = [
+            {
+                label: '浮動株空売り比率',
+                value: shortPct != null ? shortPct.toFixed(1) + '%' : 'N/A',
+                badge: shortPct != null ? riskBadge(riskLevel) : '',
+            },
+            {
+                label: 'Short Ratio',
+                value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A',
+                badge: '',
+            },
+            {
+                label: '空売り株数',
+                value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A',
+                badge: '',
+            },
+            {
+                label: '前月空売り株数',
+                value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A',
+                badge: '',
+            },
+        ];
+
+        grid.innerHTML = metrics.map(m => `
+            <div class="bg-[#151b2e] rounded-lg p-3">
+                <p class="text-xs text-slate-500 mb-1">${m.label}</p>
+                <div class="flex items-center gap-2">
+                    <p class="text-lg font-bold text-slate-200">${m.value}</p>
+                    ${m.badge}
+                </div>
+            </div>
+        `).join('');
+
+        if (atr != null) {
+            atrSection.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-400">ATR(14)</span>
+                    <span class="text-sm font-medium text-slate-200">${formatPrice(atr)}</span>
+                </div>
+            `;
+        } else {
+            atrSection.innerHTML = '';
+        }
+    }
+
+    // --- Patterns ---
+    function renderPatterns(patterns) {
+        const grid = document.getElementById('patterns-grid');
+        const empty = document.getElementById('patterns-empty');
+
+        if (!patterns.length) {
+            grid.innerHTML = '';
+            empty.classList.remove('hidden');
+            return;
+        }
+
+        empty.classList.add('hidden');
+
+        grid.innerHTML = patterns.map(p => {
+            const typeClass = p.type === 'confirmed'
+                ? 'bg-blue-500/20 text-blue-400'
+                : 'bg-purple-500/20 text-purple-400';
+            const typeLabel = p.type === 'confirmed' ? '確定' : '予測';
+
+            let signalClass = 'text-slate-300';
+            if (p.signal && p.signal.includes('強気')) signalClass = 'text-green-400';
+            if (p.signal && p.signal.includes('弱気')) signalClass = 'text-red-400';
+
+            let requiredThirdHtml = '';
+            if (p.type === 'predicted' && p.required_third != null) {
+                requiredThirdHtml = `
+                    <div class="mt-3 bg-purple-500/10 border border-purple-500/20 rounded p-2">
+                        <p class="text-xs text-purple-400">必要な3日目の変化率: <span class="font-bold">${p.required_third}</span></p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="pattern-card bg-[#151b2e] rounded-lg p-4 hover:bg-[#252d42] transition-colors" data-type="${p.type}">
+                    <div class="flex items-start justify-between mb-2">
+                        <h3 class="font-bold text-slate-200">${p.name || ''}</h3>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${typeClass}">${typeLabel}</span>
+                    </div>
+                    <p class="text-sm ${signalClass} mb-1">${p.signal || ''}</p>
+                    <p class="text-xs text-slate-500">${p.description || ''}</p>
+                    ${requiredThirdHtml}
+                </div>
+            `;
+        }).join('');
+
+        // Reset filter
+        filterPatterns(activeFilter);
+    }
+
+    // --- Risk Analysis ---
+    function renderRisk(riskData) {
+        const section = document.getElementById('risk-section');
+
+        if (!riskData || (!riskData.financial_health && !riskData.offering_risk)) {
+            section.innerHTML = '';
+            return;
+        }
+
+        function formatMetricValue(metric) {
+            if (metric.value == null) return 'N/A';
+            const v = metric.value;
+            if (metric.name.includes('レシオ') || metric.name.includes('比率') || metric.name.includes('流動')) {
+                return v.toFixed(2) + 'x';
+            }
+            if (metric.name.includes('利益率')) {
+                return (v * 100).toFixed(1) + '%';
+            }
+            if (metric.name.includes('ランウェイ')) {
+                if (riskData.financial_health && metric.description && metric.description.includes('黒字')) return '黒字';
+                return v.toFixed(0) + 'ヶ月';
+            }
+            if (Math.abs(v) >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+            if (Math.abs(v) >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+            return v.toFixed(2);
+        }
+
+        function renderCategory(title, cat) {
+            if (!cat) return '';
+            const metricKeys = Object.keys(cat).filter(k => k !== 'overall_level' && k !== 'summary');
+            const metricsHtml = metricKeys.map(key => {
+                const m = cat[key];
+                if (!m || !m.name) return '';
+                return `
+                    <div class="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+                        <span class="text-sm text-slate-400">${m.name}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-slate-200">${formatMetricValue(m)}</span>
+                            ${riskBadge(m.level)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const summaryHtml = cat.summary
+                ? `<div class="mt-4 bg-slate-800/50 rounded p-3"><p class="text-sm text-slate-400">${cat.summary}</p></div>`
+                : '';
+
+            return `
+                <div class="bg-[#1e2538] rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-slate-200">${title}</h2>
+                        ${riskBadge(cat.overall_level)}
+                    </div>
+                    <div>${metricsHtml}</div>
+                    ${summaryHtml}
+                </div>
+            `;
+        }
+
+        section.innerHTML =
+            renderCategory('財務健全性', riskData.financial_health) +
+            renderCategory('オファリングリスク', riskData.offering_risk);
+    }
+
+    // --- Save Image ---
+    async function saveImage() {
+        const btn = document.getElementById('save-btn');
+        btn.textContent = '保存中...';
+        btn.disabled = true;
+        try {
+            const canvas = await html2canvas(document.getElementById('results-section'), {
+                backgroundColor: '#0a0e1a',
+                scale: 2,
+            });
+            const link = document.createElement('a');
+            const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            link.download = `${currentTicker}_analysis_${date}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        } catch (e) {
+            showError('画像の保存に失敗しました: ' + e.message);
+        } finally {
+            btn.textContent = '画像として保存';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
