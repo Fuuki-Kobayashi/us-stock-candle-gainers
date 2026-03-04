@@ -1,0 +1,11 @@
+tests/
+.git/
+__pycache__/
+*.pyc
+.env
+.spec-workflow/
+node_modules/
+.ruff_cache/
+.pytest_cache/
+.venv/
+*.egg-info/
