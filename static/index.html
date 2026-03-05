@@ -232,6 +232,41 @@
             border-radius: 12px;
             overflow: hidden;
         }
+
+        /* Pattern detail modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(6,10,18,0.88);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            max-width: 560px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: scale(0.92) translateY(12px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        .pattern-card { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -240,8 +275,37 @@
     <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background: rgba(6,10,18,0.85); backdrop-filter: blur(4px);">
         <div class="text-center">
             <div class="inline-block w-14 h-14 border-[3px] rounded-full animate-spin mb-5" style="border-color: var(--accent); border-top-color: transparent;"></div>
-            <p class="text-xl font-bold" style="color: var(--text-primary);">Analyzing...</p>
-            <p class="text-sm mt-1 font-mono" style="color: var(--text-muted);">Fetching market data</p>
+            <p class="text-xl font-bold" style="color: var(--text-primary);">分析中...</p>
+            <p class="text-sm mt-1 font-mono" style="color: var(--text-muted);">データを取得しています</p>
+        </div>
+    </div>
+
+    <!-- Pattern Detail Modal -->
+    <div id="pattern-modal" class="modal-overlay" onclick="if(event.target===this)closePatternModal()">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <span id="modal-tag" class="tag"></span>
+                    <span id="modal-signal" class="text-sm font-semibold"></span>
+                </div>
+                <button onclick="closePatternModal()" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors" style="color: var(--text-muted);">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <h2 id="modal-name" class="text-xl font-bold mb-3" style="color: var(--text-primary);"></h2>
+            <div class="flex justify-center mb-5">
+                <canvas id="modal-candle-canvas" class="rounded-lg" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"></canvas>
+            </div>
+            <p id="modal-description" class="text-sm leading-relaxed mb-4" style="color: var(--text-secondary);"></p>
+            <div id="modal-required" class="hidden rounded-lg p-3 mb-4" style="background: var(--predicted-dim); border: 1px solid #a78bfa22;">
+                <p class="text-sm font-mono" style="color: var(--predicted);"></p>
+            </div>
+            <div id="modal-meta" class="rounded-lg p-3" style="background: var(--bg-base); border: 1px solid var(--border-subtle);">
+                <div class="flex items-center gap-4 text-xs" style="color: var(--text-muted);">
+                    <span id="modal-candle-count"></span>
+                    <span id="modal-direction"></span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -259,7 +323,7 @@
                     US Stock Candle Analysis
                 </h1>
             </div>
-            <p class="text-sm font-mono" style="color: var(--text-muted); letter-spacing: 0.15em;">CANDLESTICK PATTERN RECOGNITION &amp; RISK ANALYSIS</p>
+            <p class="text-sm font-mono" style="color: var(--text-muted); letter-spacing: 0.15em;">ローソク足パターン認識 &amp; リスク分析ツール</p>
         </header>
 
         <!-- Input Form -->
@@ -267,23 +331,23 @@
             <div class="space-y-5">
                 <!-- Ticker -->
                 <div>
-                    <label for="ticker" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Ticker Symbol</label>
-                    <input type="text" id="ticker" placeholder="AAPL, TSLA, GME ..."
+                    <label for="ticker" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">ティッカーシンボル</label>
+                    <input type="text" id="ticker" placeholder="例: AAPL, TSLA, GME"
                         class="input-field text-lg font-mono font-semibold tracking-wider"
                         style="text-transform: uppercase; font-size: 18px; padding: 14px 20px;">
                 </div>
                 <!-- Day Inputs -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label for="day1" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day1 Change (%)</label>
-                        <input type="number" step="0.1" id="day1" placeholder="5.2" class="input-field font-mono">
+                        <label for="day1" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day1 変化率 (%)</label>
+                        <input type="number" step="0.1" id="day1" placeholder="例: 5.2" class="input-field font-mono">
                     </div>
                     <div>
-                        <label for="day2" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day2 Change (%)</label>
-                        <input type="number" step="0.1" id="day2" placeholder="-3.1" class="input-field font-mono">
+                        <label for="day2" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day2 変化率 (%)</label>
+                        <input type="number" step="0.1" id="day2" placeholder="例: -3.1" class="input-field font-mono">
                     </div>
                     <div>
-                        <label for="day3" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day3 Change (%)</label>
+                        <label for="day3" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day3 変化率 (%)</label>
                         <input type="number" step="0.1" id="day3" placeholder="2.0" class="input-field font-mono">
                     </div>
                 </div>
@@ -293,16 +357,16 @@
                     <div class="flex items-center gap-6 flex-wrap">
                         <!-- Candle Count Selector -->
                         <div id="candle-count-selector">
-                            <label class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Analysis Mode</label>
+                            <label class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">分析モード</label>
                             <div class="flex gap-2">
-                                <button id="btn-2candle" type="button" class="mode-btn">2-Candle</button>
-                                <button id="btn-3candle" type="button" class="mode-btn mode-btn-active">3-Candle</button>
+                                <button id="btn-2candle" type="button" class="mode-btn">2本分析</button>
+                                <button id="btn-3candle" type="button" class="mode-btn mode-btn-active">3本分析</button>
                             </div>
                         </div>
                         <!-- Mode Badge -->
                         <div class="flex items-center gap-2 pt-5">
                             <div class="w-2 h-2 rounded-full glow-pulse" id="mode-dot" style="background: var(--accent);"></div>
-                            <span id="mode-badge" class="text-xs font-mono font-medium tracking-wider" style="color: var(--accent);">REALDATA MODE</span>
+                            <span id="mode-badge" class="text-xs font-mono font-medium tracking-wider" style="color: var(--accent);">リアルデータモード</span>
                         </div>
                     </div>
                     <button id="analyze-btn" onclick="analyze()" class="btn-analyze">
@@ -310,7 +374,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
-                            Analyze
+                            分析する
                         </span>
                     </button>
                 </div>
@@ -341,8 +405,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
                 </svg>
             </div>
-            <p class="text-lg font-medium" style="color: var(--text-secondary);">Enter a ticker symbol to begin analysis</p>
-            <p class="text-sm font-mono mt-2" style="color: var(--text-muted);">CANDLESTICK PATTERNS &bull; SHORT INTEREST &bull; RISK METRICS</p>
+            <p class="text-lg font-medium" style="color: var(--text-secondary);">ティッカーシンボルを入力して分析を開始</p>
+            <p class="text-sm font-mono mt-2" style="color: var(--text-muted);">ローソク足パターン &bull; 空売りデータ &bull; リスク分析</p>
         </div>
 
         <!-- Results Section -->
@@ -359,7 +423,7 @@
             <div id="chart-section" class="hidden animate-reveal">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-1 h-5 rounded-full" style="background: var(--accent);"></div>
-                    <h3 class="text-base font-bold tracking-wide" style="color: var(--text-primary);">Candlestick Chart</h3>
+                    <h3 class="text-base font-bold tracking-wide" style="color: var(--text-primary);">ローソク足チャート</h3>
                 </div>
                 <div class="chart-container">
                     <canvas id="candle-chart"></canvas>
@@ -372,18 +436,18 @@
                 <div class="lg:col-span-2 card p-5 animate-reveal" style="animation-delay: 0.05s;">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-1 h-5 rounded-full" style="background: var(--accent);"></div>
-                        <h2 class="text-base font-bold tracking-wide">OHLCV Data</h2>
+                        <h2 class="text-base font-bold tracking-wide">ローソク足データ</h2>
                     </div>
                     <div class="overflow-x-auto scrollbar-thin">
                         <table id="candle-table" class="w-full text-sm font-mono">
                             <thead>
                                 <tr style="color: var(--text-muted); border-bottom: 1px solid var(--border-subtle);">
-                                    <th class="text-left py-3 px-4 font-medium text-xs tracking-wider uppercase">Date</th>
-                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Open</th>
-                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">High</th>
-                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Low</th>
-                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Close</th>
-                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Volume</th>
+                                    <th class="text-left py-3 px-4 font-medium text-xs tracking-wider uppercase">日付</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">始値</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">高値</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">安値</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">終値</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">出来高</th>
                                 </tr>
                             </thead>
                             <tbody id="candle-tbody"></tbody>
@@ -395,7 +459,7 @@
                 <div id="short-interest-section" class="card p-5 animate-reveal" style="animation-delay: 0.1s;">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-1 h-5 rounded-full" style="background: var(--bearish);"></div>
-                        <h2 class="text-base font-bold tracking-wide">Short Interest</h2>
+                        <h2 class="text-base font-bold tracking-wide">空売りデータ</h2>
                     </div>
                     <div id="short-interest-grid" class="space-y-3"></div>
                     <div id="atr-section" class="mt-4 pt-4" style="border-top: 1px solid var(--border-subtle);"></div>
@@ -407,18 +471,18 @@
                 <div class="flex items-center justify-between flex-wrap gap-4 mb-5">
                     <div class="flex items-center gap-3">
                         <div class="w-1 h-5 rounded-full" style="background: var(--bullish);"></div>
-                        <h2 class="text-base font-bold tracking-wide">Detected Patterns</h2>
+                        <h2 class="text-base font-bold tracking-wide">検出パターン</h2>
                         <span id="pattern-count" class="tag tag-confirmed font-mono" style="font-size: 10px;">0</span>
                     </div>
                     <div class="flex gap-2">
-                        <button id="pattern-filter-all" onclick="filterPatterns('all')" class="filter-btn filter-btn-active">ALL</button>
-                        <button id="pattern-filter-confirmed" onclick="filterPatterns('confirmed')" class="filter-btn filter-btn-inactive">CONFIRMED</button>
-                        <button id="pattern-filter-predicted" onclick="filterPatterns('predicted')" class="filter-btn filter-btn-inactive">PREDICTED</button>
+                        <button id="pattern-filter-all" onclick="filterPatterns('all')" class="filter-btn filter-btn-active">全て</button>
+                        <button id="pattern-filter-confirmed" onclick="filterPatterns('confirmed')" class="filter-btn filter-btn-inactive">確定</button>
+                        <button id="pattern-filter-predicted" onclick="filterPatterns('predicted')" class="filter-btn filter-btn-inactive">予測</button>
                     </div>
                 </div>
                 <div id="patterns-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
                 <div id="patterns-empty" class="hidden text-center py-12" style="color: var(--text-muted);">
-                    <p class="font-mono text-sm">NO PATTERNS DETECTED</p>
+                    <p class="font-mono text-sm">パターンは検出されませんでした</p>
                 </div>
             </div>
 
@@ -432,7 +496,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                         </svg>
-                        Save as Image
+                        画像として保存
                     </span>
                 </button>
             </div>
@@ -535,13 +599,13 @@
         const d3 = document.getElementById('day3').value.trim();
 
         if (d1 !== '' && d2 !== '' && d3 !== '') {
-            badge.textContent = 'SIMULATION (CONFIRMED)';
+            badge.textContent = 'シミュレーション（確定）';
             badge.style.color = dot.style.background = 'var(--bullish)';
         } else if (d1 !== '' && d2 !== '') {
-            badge.textContent = 'SIMULATION (PREDICTED)';
+            badge.textContent = 'シミュレーション（予測）';
             badge.style.color = dot.style.background = 'var(--predicted)';
         } else {
-            badge.textContent = 'REALDATA MODE';
+            badge.textContent = 'リアルデータモード';
             badge.style.color = dot.style.background = 'var(--accent)';
         }
     }
@@ -620,6 +684,124 @@
         document.getElementById('error-message').textContent = msg;
         document.getElementById('error-container').classList.remove('hidden');
         errorTimeout = setTimeout(hideError, 8000);
+    }
+
+    // ============================================================
+    // PATTERN MODAL
+    // ============================================================
+    let currentPatterns = [];
+
+    function openPatternModal(index) {
+        const p = currentPatterns[index];
+        if (!p) return;
+
+        const modal = document.getElementById('pattern-modal');
+        const isBullish = p.signal && p.signal.includes('強気');
+        const isBearish = p.signal && p.signal.includes('弱気');
+
+        // Tag
+        const tagEl = document.getElementById('modal-tag');
+        tagEl.textContent = p.type === 'confirmed' ? '確定' : '予測';
+        tagEl.className = 'tag ' + (p.type === 'confirmed' ? 'tag-confirmed' : 'tag-predicted');
+
+        // Signal
+        const sigEl = document.getElementById('modal-signal');
+        sigEl.textContent = p.signal || '';
+        sigEl.style.color = isBullish ? 'var(--bullish)' : isBearish ? 'var(--bearish)' : 'var(--text-secondary)';
+
+        // Name & Description
+        document.getElementById('modal-name').textContent = p.name || '';
+        document.getElementById('modal-description').textContent = p.description || '';
+
+        // Large mini candle (160x100)
+        const canvas = document.getElementById('modal-candle-canvas');
+        drawModalCandles(canvas, p.name, p.signal);
+
+        // Required 3rd
+        const reqEl = document.getElementById('modal-required');
+        if (p.type === 'predicted' && p.required_third != null) {
+            reqEl.classList.remove('hidden');
+            reqEl.querySelector('p').innerHTML = '必要な3日目の変化率: <span class="font-bold">' + p.required_third + '</span>';
+        } else {
+            reqEl.classList.add('hidden');
+        }
+
+        // Meta info
+        const shapes = PATTERN_SHAPES[p.name] || PATTERN_SHAPES[p.name.replace(/予測$/, '')];
+        const candleNum = shapes ? shapes.length : '?';
+        document.getElementById('modal-candle-count').textContent = candleNum + '本足パターン';
+        document.getElementById('modal-direction').textContent = isBullish ? '強気（ブル）' : isBearish ? '弱気（ベア）' : '';
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePatternModal() {
+        document.getElementById('pattern-modal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePatternModal();
+    });
+
+    function drawModalCandles(canvas, patternName, signal) {
+        let shapes = PATTERN_SHAPES[patternName];
+        if (!shapes) shapes = PATTERN_SHAPES[patternName.replace(/予測$/, '')];
+        if (!shapes) {
+            const isBullish = signal && signal.includes('強気');
+            shapes = isBullish ? [{o:35,h:80,l:30,c:75}] : [{o:75,h:80,l:20,c:25}];
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        const W = 200, H = 120;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const PAD = 16;
+        const chartW = W - PAD * 2;
+        const chartH = H - PAD * 2;
+        const n = shapes.length;
+        const slotW = chartW / n;
+        const candleW = Math.min(slotW * 0.5, 30);
+        const BULL = '#00e5a0';
+        const BEAR = '#ff4d6a';
+
+        shapes.forEach((s, i) => {
+            const cx = PAD + slotW * i + slotW / 2;
+            const isBull = s.c >= s.o;
+            const color = isBull ? BULL : BEAR;
+            const toY = v => PAD + chartH * (1 - v / 100);
+            const bodyTop = toY(Math.max(s.o, s.c));
+            const bodyBot = toY(Math.min(s.o, s.c));
+            const bodyH = Math.max(bodyBot - bodyTop, 1);
+
+            // Glow
+            ctx.shadowColor = isBull ? '#00e5a044' : '#ff4d6a44';
+            ctx.shadowBlur = 10;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, toY(s.h));
+            ctx.lineTo(cx, toY(s.l));
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.9;
+            ctx.fillRect(cx - candleW/2, bodyTop, candleW, bodyH);
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cx - candleW/2, bodyTop, candleW, bodyH);
+
+            ctx.shadowBlur = 0;
+        });
     }
     function hideError() {
         document.getElementById('error-container').classList.add('hidden');
@@ -754,10 +936,10 @@
 
         document.getElementById('mode-bar-ticker').textContent = currentTicker;
         const modeMap = {
-            realdata: 'Realdata Analysis (3-Candle)',
-            realdata_2candle: 'Realdata Analysis (2-Candle)',
-            simulation_confirmed: 'Simulation (Confirmed)',
-            simulation_predicted: 'Simulation (Predicted)',
+            realdata: 'リアルデータ分析（3本）',
+            realdata_2candle: 'リアルデータ分析（2本）',
+            simulation_confirmed: 'シミュレーション（確定）分析',
+            simulation_predicted: 'シミュレーション（予測）分析',
         };
         document.getElementById('mode-bar-text').textContent = modeMap[data.mode] || data.mode;
 
@@ -925,7 +1107,7 @@
         const atrSection = document.getElementById('atr-section');
 
         if (!si) {
-            grid.innerHTML = `<p class="text-center py-6" style="color: var(--text-muted);">No data</p>`;
+            grid.innerHTML = `<p class="text-center py-6" style="color: var(--text-muted);">データなし</p>`;
             atrSection.innerHTML = '';
             return;
         }
@@ -935,10 +1117,10 @@
         if (pct != null) { if (pct >= 20) risk = '高'; else if (pct >= 10) risk = '中'; }
 
         const metrics = [
-            { label: 'Short % of Float', value: pct != null ? pct.toFixed(1)+'%' : 'N/A', badge: pct != null ? riskBadge(risk) : '' },
-            { label: 'Short Ratio', value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A', badge: '' },
-            { label: 'Shares Short', value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A', badge: '' },
-            { label: 'Prior Month', value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A', badge: '' },
+            { label: '浮動株空売り比率', value: pct != null ? pct.toFixed(1)+'%' : 'N/A', badge: pct != null ? riskBadge(risk) : '' },
+            { label: 'ショートレシオ', value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A', badge: '' },
+            { label: '空売り株数', value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A', badge: '' },
+            { label: '前月空売り株数', value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A', badge: '' },
         ];
 
         grid.innerHTML = metrics.map((m, i) => `
@@ -968,6 +1150,8 @@
         const countEl = document.getElementById('pattern-count');
         countEl.textContent = patterns.length;
 
+        currentPatterns = patterns;
+
         if (!patterns.length) {
             grid.innerHTML = '';
             empty.classList.remove('hidden');
@@ -981,21 +1165,21 @@
             const cardClass = isBullish ? 'pattern-card-bullish' : isBearish ? 'pattern-card-bearish' : '';
             const signalColor = isBullish ? 'var(--bullish)' : isBearish ? 'var(--bearish)' : 'var(--text-secondary)';
             const tagClass = p.type === 'confirmed' ? 'tag-confirmed' : 'tag-predicted';
-            const tagLabel = p.type === 'confirmed' ? 'CONFIRMED' : 'PREDICTED';
+            const tagLabel = p.type === 'confirmed' ? '確定' : '予測';
 
             let requiredHtml = '';
             if (p.type === 'predicted' && p.required_third != null) {
                 requiredHtml = `
                     <div class="mt-3 rounded-lg p-2.5" style="background: var(--predicted-dim); border: 1px solid #a78bfa22;">
                         <p class="text-[11px] font-mono" style="color: var(--predicted);">
-                            Required 3rd: <span class="font-bold">${p.required_third}</span>
+                            必要な3日目: <span class="font-bold">${p.required_third}</span>
                         </p>
                     </div>
                 `;
             }
 
             return `
-                <div class="pattern-card card ${cardClass} p-4 animate-reveal" data-type="${p.type}" style="animation-delay:${0.15+i*0.04}s;">
+                <div class="pattern-card card ${cardClass} p-4 animate-reveal" data-type="${p.type}" style="animation-delay:${0.15+i*0.04}s;" onclick="openPatternModal(${i})">
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1.5">
@@ -1037,8 +1221,8 @@
             if (m.name.includes('レシオ') || m.name.includes('比率') || m.name.includes('流動')) return v.toFixed(2)+'x';
             if (m.name.includes('利益率')) return (v*100).toFixed(1)+'%';
             if (m.name.includes('ランウェイ')) {
-                if (m.description && m.description.includes('黒字')) return 'Profitable';
-                return v.toFixed(0)+' months';
+                if (m.description && m.description.includes('黒字')) return '黒字';
+                return v.toFixed(0)+'ヶ月';
             }
             if (Math.abs(v) >= 1e9) return '$'+(v/1e9).toFixed(1)+'B';
             if (Math.abs(v) >= 1e6) return '$'+(v/1e6).toFixed(1)+'M';
@@ -1082,8 +1266,8 @@
         }
 
         section.innerHTML =
-            renderCat('Financial Health', 'var(--bullish)', riskData.financial_health) +
-            renderCat('Offering Risk', 'var(--bearish)', riskData.offering_risk);
+            renderCat('財務健全性', 'var(--bullish)', riskData.financial_health) +
+            renderCat('オファリングリスク', 'var(--bearish)', riskData.offering_risk);
     }
 
     // ============================================================
@@ -1091,7 +1275,7 @@
     // ============================================================
     async function saveImage() {
         const btn = document.getElementById('save-btn');
-        btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Saving...</span>';
+        btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>保存中...</span>';
         btn.style.pointerEvents = 'none';
         try {
             const canvas = await html2canvas(document.getElementById('results-section'), {
@@ -1103,9 +1287,9 @@
             link.download = `${currentTicker}_analysis_${date}.jpg`;
             link.href = canvas.toDataURL('image/jpeg', 0.95);
             link.click();
-        } catch (e) { showError('Failed to save: ' + e.message); }
+        } catch (e) { showError('画像の保存に失敗しました: ' + e.message); }
         finally {
-            btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Save as Image</span>';
+            btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>画像として保存</span>';
             btn.style.pointerEvents = 'auto';
         }
     }
