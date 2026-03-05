@@ -32,20 +32,26 @@ def validate_ticker(ticker: str) -> dict:
     return info
 
 
-def get_ohlcv(ticker: str) -> tuple[list[CandleData], float | None]:
-    """Fetch 3 most recent candles and ATR(14).
+def get_ohlcv(
+    ticker: str, candle_count: int = 3
+) -> tuple[list[CandleData], float | None]:
+    """Fetch most recent candles and ATR(14).
+
+    Args:
+        ticker: Stock ticker symbol.
+        candle_count: Number of candles to return (2 or 3, default 3).
 
     Returns (candles, atr).
-    Uses history(period='5d') for candles (last 3 rows).
+    Uses history(period='5d') for candles (last N rows).
     Uses history(period='1mo') for ATR(14) calculation.
     Wraps any yfinance errors in DataFetchError.
     """
     try:
         t = yf.Ticker(ticker)
 
-        # Fetch candle data (last 3 rows of 5d history)
+        # Fetch candle data (last N rows of 5d history)
         hist_5d = t.history(period="5d")
-        last_3 = hist_5d.tail(3)
+        last_3 = hist_5d.tail(candle_count)
 
         candles = []
         for idx, row in last_3.iterrows():
