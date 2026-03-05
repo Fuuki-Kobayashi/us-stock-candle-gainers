@@ -122,7 +122,7 @@ def get_short_interest(ticker: str) -> ShortInterest | None:
         return None
 
     return ShortInterest(
-        short_percent_of_float=short_pct,
+        short_percent_of_float=short_pct * 100 if short_pct is not None else None,
         short_ratio=short_ratio,
         shares_short=shares_short,
         shares_short_prior_month=shares_short_prior,

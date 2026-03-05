@@ -82,7 +82,7 @@ def test_get_short_interest_returns_data(mock_yf: MagicMock) -> None:
     result = get_short_interest("AAPL")
 
     assert isinstance(result, ShortInterest)
-    assert result.short_percent_of_float == 0.05
+    assert result.short_percent_of_float == 5.0
     assert result.short_ratio == 2.5
     assert result.shares_short == 5000000
     assert result.shares_short_prior_month == 4500000
