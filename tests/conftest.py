@@ -5,6 +5,54 @@ import pytest
 
 from app.models.candle import CandleData
 
+# --- Candle factory functions ---
+
+
+def make_candle(
+    open: float = 100.0,
+    high: float = 110.0,
+    low: float = 90.0,
+    close: float = 105.0,
+    volume: int = 1000000,
+    date: str = "2024-01-01",
+) -> CandleData:
+    return CandleData(
+        date=date, open=open, high=high, low=low, close=close, volume=volume
+    )
+
+
+def make_bullish_large(base: float = 100.0) -> CandleData:
+    return make_candle(open=base, high=base + 12, low=base - 2, close=base + 10)
+
+
+def make_bearish_large(base: float = 100.0) -> CandleData:
+    return make_candle(open=base + 10, high=base + 12, low=base - 2, close=base)
+
+
+def make_doji(base: float = 100.0) -> CandleData:
+    return make_candle(open=base, high=base + 5, low=base - 5, close=base + 0.5)
+
+
+def make_small_body(base: float = 100.0, bullish: bool = True) -> CandleData:
+    close = base + 2 if bullish else base - 2
+    return make_candle(open=base, high=base + 5, low=base - 5, close=close)
+
+
+def make_pin_bar_bullish(base: float = 100.0) -> CandleData:
+    return make_candle(open=base + 1, high=base + 2, low=base - 8, close=base + 1.5)
+
+
+def make_pin_bar_bearish(base: float = 100.0) -> CandleData:
+    return make_candle(open=base - 1, high=base + 8, low=base - 2, close=base - 1.5)
+
+
+def make_marubozu_bullish(base: float = 100.0) -> CandleData:
+    return make_candle(open=base, high=base + 10.1, low=base - 0.1, close=base + 10)
+
+
+def make_marubozu_bearish(base: float = 100.0) -> CandleData:
+    return make_candle(open=base + 10, high=base + 10.1, low=base - 0.1, close=base)
+
 
 @pytest.fixture
 def mock_yfinance_history() -> pd.DataFrame:

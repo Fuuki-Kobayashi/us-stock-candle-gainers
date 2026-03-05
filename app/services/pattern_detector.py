@@ -9,6 +9,10 @@ from app.models.candle import CandleData, PatternResult
 # --- Thresholds ---
 LARGE_BODY_THRESHOLD = 0.6
 SMALL_BODY_THRESHOLD = 0.3
+DOJI_THRESHOLD = 0.1
+MARUBOZU_THRESHOLD = 0.9
+PIN_BAR_SHADOW_RATIO = 2.0
+TOLERANCE_RATIO = 0.001
 
 
 def _body_ratio(candle: CandleData) -> float:
@@ -37,6 +41,82 @@ def _is_small_body(candle: CandleData) -> bool:
 
 def _midpoint(candle: CandleData) -> float:
     return (candle.open + candle.close) / 2
+
+
+def _body_top(candle: CandleData) -> float:
+    return max(candle.open, candle.close)
+
+
+def _body_bottom(candle: CandleData) -> float:
+    return min(candle.open, candle.close)
+
+
+def _body_size(candle: CandleData) -> float:
+    return abs(candle.close - candle.open)
+
+
+def _candle_range(candle: CandleData) -> float:
+    return candle.high - candle.low
+
+
+def _is_doji(candle: CandleData) -> bool:
+    return _body_ratio(candle) <= DOJI_THRESHOLD
+
+
+def _is_marubozu(candle: CandleData) -> bool:
+    return _body_ratio(candle) >= MARUBOZU_THRESHOLD
+
+
+def _upper_shadow(candle: CandleData) -> float:
+    return candle.high - max(candle.open, candle.close)
+
+
+def _lower_shadow(candle: CandleData) -> float:
+    return min(candle.open, candle.close) - candle.low
+
+
+def _upper_shadow_ratio(candle: CandleData) -> float:
+    body = _body_size(candle)
+    if body == 0:
+        cr = _candle_range(candle)
+        return _upper_shadow(candle) / cr if cr > 0 else 0.0
+    return _upper_shadow(candle) / body
+
+
+def _lower_shadow_ratio(candle: CandleData) -> float:
+    body = _body_size(candle)
+    if body == 0:
+        cr = _candle_range(candle)
+        return _lower_shadow(candle) / cr if cr > 0 else 0.0
+    return _lower_shadow(candle) / body
+
+
+def _is_pin_bar_bullish(candle: CandleData) -> bool:
+    return (
+        _lower_shadow_ratio(candle) >= PIN_BAR_SHADOW_RATIO
+        and _upper_shadow(candle) < _body_size(candle) * 0.5
+    )
+
+
+def _is_pin_bar_bearish(candle: CandleData) -> bool:
+    return (
+        _upper_shadow_ratio(candle) >= PIN_BAR_SHADOW_RATIO
+        and _lower_shadow(candle) < _body_size(candle) * 0.5
+    )
+
+
+def _has_gap_up(prev: CandleData, curr: CandleData) -> bool:
+    return curr.low > prev.high
+
+
+def _has_gap_down(prev: CandleData, curr: CandleData) -> bool:
+    return curr.high < prev.low
+
+
+def _near_equal(a: float, b: float, tolerance: float | None = None) -> bool:
+    if tolerance is None:
+        tolerance = max(abs(a), abs(b)) * TOLERANCE_RATIO
+    return abs(a - b) <= tolerance
 
 
 # --- Confirmed patterns (3-candle) ---
