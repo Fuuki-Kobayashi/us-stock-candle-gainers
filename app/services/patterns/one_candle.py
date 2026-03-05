@@ -33,6 +33,8 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bearish",
+                pattern_candle_count=1,
                 name="ベアリッシュ・ピンバー",
                 signal="🔽 弱気シグナル",
                 description="上ヒゲが長く、高値圏での売り圧力を示唆します。",
@@ -48,6 +50,8 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
             results.append(
                 PatternResult(
                     type="confirmed",
+                    direction="bearish",
+                    pattern_candle_count=1,
                     name="トウバ（墓石十字）",
                     signal="🔽 弱気シグナル",
                     description="買い手が完全に押し戻された十字線で、天井シグナルです。",
@@ -62,6 +66,8 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
                 results.append(
                     PatternResult(
                         type="confirmed",
+                        direction="bearish",
+                        pattern_candle_count=1,
                         name="首吊り線",
                         signal="🔽 弱気シグナル",
                         description="高値圏で出現する小実体・長い下ヒゲのパターンで、下落の警告です。",
@@ -75,6 +81,8 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
                 results.append(
                     PatternResult(
                         type="confirmed",
+                        direction="bearish",
+                        pattern_candle_count=1,
                         name="流れ星",
                         signal="🔽 弱気シグナル",
                         description="高値で買われた後に激しく売り戻されたパターンです。",

@@ -7,20 +7,29 @@ from fastapi.staticfiles import StaticFiles
 from app.exceptions import DataFetchError, TickerNotEquityError, TickerNotFoundError
 from app.routers.analyze import router as analyze_router
 from app.routers.risk import router as risk_router
+from app.routers.screener import router as screener_router
 
 app = FastAPI(title="US Stock Candle Analysis")
 
 app.include_router(analyze_router)
 app.include_router(risk_router)
-
-# Mount static files AFTER routers to avoid conflicts
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.include_router(screener_router)
 
 
 @app.get("/")
 def root() -> FileResponse:
     """Serve the main HTML page."""
     return FileResponse("static/index.html")
+
+
+@app.get("/screener")
+def screener_page() -> FileResponse:
+    """Serve the screener HTML page."""
+    return FileResponse("static/screener.html")
+
+
+# Mount static files AFTER routers to avoid conflicts
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.exception_handler(TickerNotFoundError)

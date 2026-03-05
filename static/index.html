@@ -324,6 +324,16 @@
                 </h1>
             </div>
             <p class="text-sm font-mono" style="color: var(--text-muted); letter-spacing: 0.15em;">ローソク足パターン認識 &amp; リスク分析ツール</p>
+            <div class="flex items-center justify-center gap-4 mt-2">
+                <a href="/screener" style="color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border-subtle); transition: all 0.2s ease;" onmouseover="this.style.color='var(--text-primary)';this.style.borderColor='var(--accent)';this.style.background='var(--accent-dim)'" onmouseout="this.style.color='var(--text-secondary)';this.style.borderColor='var(--border-subtle)';this.style.background='transparent'">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Screener
+                    </span>
+                </a>
+            </div>
         </header>
 
         <!-- Input Form -->
@@ -1293,6 +1303,17 @@
             btn.style.pointerEvents = 'auto';
         }
     }
+
+    // ============================================================
+    // AUTO-FILL TICKER FROM URL PARAMETER
+    // ============================================================
+    (function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var tickerParam = urlParams.get('ticker');
+        if (tickerParam) {
+            document.getElementById('ticker').value = tickerParam.toUpperCase();
+        }
+    })();
 </script>
 
 </body>

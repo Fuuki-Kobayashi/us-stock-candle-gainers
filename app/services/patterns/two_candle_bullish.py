@@ -43,6 +43,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="包み線（抱き線）",
                 signal="🔼 強気シグナル",
                 description="大きな陽線が前の陰線を完全に包み込み、強い反転シグナルです。",
@@ -61,6 +63,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="はらみ線",
                 signal="🔼 強気シグナル",
                 description="大陰線の中に小陽線が収まり、弱気エネルギーの衰退を示します。",
@@ -78,6 +82,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="はらみ寄せ線",
                 signal="🔼 強気シグナル",
                 description="大陰線の中に十字線が出現し、迷いが頂点に達した反転シグナルです。",
@@ -94,6 +100,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="切り込み線",
                 signal="🔼 強気シグナル",
                 description="安値を下回って始まった陽線が前日の中間点を超え、強い買い圧力を示します。",
@@ -105,6 +113,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="毛抜き底",
                 signal="🔼 強気シグナル",
                 description="同じ安値を共有する2本のローソク足で、強いサポートレベルを示します。",
@@ -122,6 +132,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="出会い線（逆襲線）",
                 signal="🔼 強気シグナル",
                 description="大陰線と大陽線が同じ終値付近で引け、穏やかな反転シグナルです。",
@@ -133,6 +145,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="並び底（ズバリ線）",
                 signal="🔼 強気シグナル",
                 description="2本連続の陰線が同じ終値で引け、サポートの堅さを示します。",
@@ -149,6 +163,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="鳩の帰巣",
                 signal="🔼 強気シグナル",
                 description="2本連続の陰線で2本目が小さく、売り圧力の減少を示します。",
@@ -165,6 +181,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="最後の抱き線",
                 signal="🔼 強気シグナル",
                 description="下降トレンド中の最後の売りクライマックスシグナルです。",
@@ -176,6 +194,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="タスキ底",
                 signal="🔼 強気シグナル",
                 description="陰線の後に窓を開けて陽線が出現し、穏やかな底入れシグナルです。",
@@ -187,6 +207,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="ダブル・ピンバー",
                 signal="🔼 強気シグナル",
                 description="2本連続の下ヒゲの長いピンバーで、強い買い圧力を示します。",
@@ -204,6 +226,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="行き違い線（キッキング）",
                 signal="🔼 強気シグナル",
                 description="ヒゲなし大陰線の後に窓を開けてヒゲなし大陽線が出現し、パニック的な買い強さを示します。",
@@ -215,6 +239,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="振り分け線",
                 signal="🔼 強気シグナル",
                 description="同じ始値で陰線と陽線が分かれ、上昇トレンドの再開を示唆します。",
@@ -233,6 +259,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="陽の陽はらみ",
                 signal="🔼 強気シグナル",
                 description="大陽線の中に小陽線が収まり、健全な一服を示します。",
@@ -244,6 +272,8 @@ def detect_2_candle_bullish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type="confirmed",
+                direction="bullish",
+                pattern_candle_count=2,
                 name="ブレイクアウェイ・ギャップ",
                 signal="🔼 強気シグナル",
                 description="上方に窓を開けて大陽線が出現し、レジスタンスの突破を示します。",

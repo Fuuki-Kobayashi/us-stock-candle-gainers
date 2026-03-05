@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -20,6 +22,8 @@ class PatternResult(BaseModel):
     signal: str  # Signal with emoji
     description: str  # Japanese description
     required_third: str | None = None  # 3rd candle condition (predicted only)
+    direction: Literal["bullish", "bearish"]
+    pattern_candle_count: Literal[1, 2, 3]
 
 
 class ShortInterest(BaseModel):

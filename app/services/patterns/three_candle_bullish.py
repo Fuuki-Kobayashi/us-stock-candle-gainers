@@ -53,6 +53,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="明けの明星",
                 signal=_SIGNAL,
                 description="下降トレンドからの反転を示唆する3本パターンです。",
@@ -72,6 +74,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="明けの十字星",
                 signal=_SIGNAL,
                 description="大陰線の後に十字線、そして大陽線が出現する強い反転シグナルです。",
@@ -92,6 +96,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="捨て子底",
                 signal=_SIGNAL,
                 description="窓を開けた十字線が前後のローソク足から孤立する、最も強い底値シグナルです。",
@@ -112,6 +118,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="赤三兵",
                 signal=_SIGNAL,
                 description="3本連続の陽線で、強い上昇トレンドを示唆します。",
@@ -132,6 +140,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="スリー・インサイド・アップ",
                 signal=_SIGNAL,
                 description="はらみ線の後に上抜ける陽線で、安全な反転確認です。",
@@ -152,6 +162,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="スリー・アウトサイド・アップ",
                 signal=_SIGNAL,
                 description="包み線の後に続伸する陽線で、強い反転確認です。",
@@ -170,6 +182,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="モーニング・ピンバー・リバーサル",
                 signal=_SIGNAL,
                 description="大陰線の後にピンバーが出現し、V字回復を示唆します。",
@@ -182,6 +196,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="三つの星底",
                 signal=_SIGNAL,
                 description="3本連続の小実体で、エネルギーが溜まり上昇への爆発を示唆します。",
@@ -199,6 +215,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="スティック・サンドイッチ",
                 signal=_SIGNAL,
                 description="短期的なW底を形成する反転パターンです。",
@@ -217,6 +235,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="南の三つ星",
                 signal=_SIGNAL,
                 description="3本連続の陰線でレンジが縮小し、売り手の力尽きを示唆します。",
@@ -237,6 +257,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="ユニーク・スリー・リバー",
                 signal=_SIGNAL,
                 description="大陰線の後にはらみ小陰線、そして小陽線で徐々に底打ちを示唆します。",
@@ -255,6 +277,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="下放れ三法",
                 signal=_SIGNAL,
                 description="下方窓を開けた2本の陰線の後、陽線が窓を埋めて反発を示唆します。",
@@ -273,6 +297,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="上放れタスキ線",
                 signal=_SIGNAL,
                 description="上方窓の後の押し目で窓を埋めず、優れた押し目買いの機会です。",
@@ -285,6 +311,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="上放れ並び赤",
                 signal=_SIGNAL,
                 description="上方窓の後に2本の陽線が並び、極めて強い上昇エネルギーを示唆します。",
@@ -297,6 +325,8 @@ def detect_3_candle_bullish(
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bullish",
+                pattern_candle_count=3,
                 name="インサイドバーの上抜け",
                 signal=_SIGNAL,
                 description="インサイドバーからの上方ブレイクアウトで、トレンド継続を示唆します。",

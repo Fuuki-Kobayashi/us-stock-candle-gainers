@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screener - US Stock Candle Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #060a12;
+            --bg-base: #0b1120;
+            --bg-surface: #111827;
+            --bg-card: #151d30;
+            --bg-card-hover: #1a2540;
+            --border-subtle: #1e293b;
+            --border-glow: #1e3a5f;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --bullish: #00e5a0;
+            --bullish-dim: #00e5a033;
+            --bullish-glow: #00e5a066;
+            --bearish: #ff4d6a;
+            --bearish-dim: #ff4d6a33;
+            --bearish-glow: #ff4d6a66;
+            --accent: #6366f1;
+            --accent-dim: #6366f133;
+            --predicted: #a78bfa;
+            --predicted-dim: #a78bfa22;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.025;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* Scanline effect */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+            );
+        }
+
+        .font-mono { font-family: 'IBM Plex Mono', monospace; }
+
+        /* Glow cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+        }
+
+        /* Staggered reveal */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-reveal {
+            animation: fadeSlideUp 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        /* Input field */
+        .input-field {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            outline: none;
+            width: 100%;
+            font-family: 'IBM Plex Mono', monospace;
+            resize: vertical;
+        }
+        .input-field::placeholder { color: var(--text-muted); }
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        /* Tag pills */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .tag-bullish {
+            background: var(--bullish-dim);
+            color: var(--bullish);
+            border: 1px solid #00e5a044;
+        }
+        .tag-bearish {
+            background: var(--bearish-dim);
+            color: var(--bearish);
+            border: 1px solid #ff4d6a44;
+        }
+        .tag-predicted {
+            background: var(--predicted-dim);
+            color: var(--predicted);
+            border: 1px solid #a78bfa33;
+        }
+
+        /* Scan button */
+        .btn-scan {
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: white;
+            font-weight: 700;
+            padding: 12px 32px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Sora', sans-serif;
+            font-size: 15px;
+            letter-spacing: 0.02em;
+        }
+        .btn-scan:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        .btn-scan:active { transform: translateY(0); }
+        .btn-scan:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Result card */
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .result-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        /* Nav link */
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            color: var(--text-primary);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        /* Collapsible */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .collapsible-header .arrow {
+            transition: transform 0.2s ease;
+            display: inline-block;
+            font-size: 10px;
+        }
+        .collapsible-header.open .arrow {
+            transform: rotate(90deg);
+        }
+
+        /* Summary bar */
+        .summary-bar {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Spinner -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background: rgba(6,10,18,0.85); backdrop-filter: blur(4px);">
+        <div class="text-center">
+            <div class="inline-block w-14 h-14 border-[3px] rounded-full animate-spin mb-5" style="border-color: var(--accent); border-top-color: transparent;"></div>
+            <p class="text-xl font-bold" style="color: var(--text-primary);">スキャン中...</p>
+            <p class="text-sm mt-1 font-mono" style="color: var(--text-muted);">複数銘柄を分析しています</p>
+        </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-6 py-8 space-y-6 relative z-10">
+
+        <!-- Header -->
+        <header class="text-center mb-4 pt-4">
+            <div class="inline-flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--bullish), var(--accent));">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight" style="background: linear-gradient(135deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    US Stock Candle Analysis
+                </h1>
+                <span class="tag" style="background: var(--accent-dim); color: var(--accent); border: 1px solid #6366f144; font-size: 10px;">Screener</span>
+            </div>
+            <div class="flex items-center justify-center gap-4 mt-2">
+                <a href="/" class="nav-link">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        個別分析
+                    </span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Input Form -->
+        <section class="card p-6">
+            <div class="space-y-4">
+                <div>
+                    <label for="tickers-input" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">ティッカーシンボル（カンマ区切り）</label>
+                    <textarea id="tickers-input" rows="3" class="input-field" placeholder="AAPL, TSLA, NVDA, MSFT, GOOGL, AMZN, META, AMD, NFLX, JPM..." style="text-transform: uppercase;"></textarea>
+                </div>
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <p class="text-xs font-mono" style="color: var(--text-muted);">最大50銘柄まで同時スキャン可能</p>
+                    <button id="scan-btn" onclick="scanTickers()" class="btn-scan">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            スキャン実行
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Container -->
+        <div id="error-container" class="hidden">
+            <div class="card p-4 flex items-center justify-between" style="border-color: var(--bearish); border-left: 3px solid var(--bearish);">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" style="color: var(--bearish);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p id="error-message" class="text-sm" style="color: var(--bearish);"></p>
+                </div>
+                <button onclick="hideError()" class="flex-shrink-0 p-1 rounded hover:bg-white/5" style="color: var(--bearish);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden space-y-6">
+
+            <!-- Summary Bar -->
+            <div id="summary-bar" class="summary-bar animate-reveal">
+                <div class="flex items-center gap-6 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full" style="background: var(--accent);"></div>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-total" class="font-bold" style="color: var(--text-primary);">0</span> 銘柄スキャン</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full" style="background: var(--bullish);"></div>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-detected" class="font-bold" style="color: var(--bullish);">0</span> 銘柄でパターン検出</span>
+                    </div>
+                    <div id="summary-errors-wrap" class="flex items-center gap-2 hidden">
+                        <div class="w-2 h-2 rounded-full" style="background: var(--bearish);"></div>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-errors" class="font-bold" style="color: var(--bearish);">0</span> エラー</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Cards Grid -->
+            <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+
+            <!-- No Pattern Section -->
+            <div id="no-pattern-section" class="hidden card p-5">
+                <div class="collapsible-header" onclick="toggleCollapsible('no-pattern')">
+                    <span class="arrow" style="color: var(--text-muted);">&#9654;</span>
+                    <div class="w-1 h-5 rounded-full" style="background: var(--text-muted);"></div>
+                    <h3 class="text-sm font-bold tracking-wide" style="color: var(--text-muted);">パターンなし</h3>
+                    <span id="no-pattern-count" class="tag font-mono" style="background: var(--bg-base); color: var(--text-muted); border: 1px solid var(--border-subtle); font-size: 10px;">0</span>
+                </div>
+                <div id="no-pattern-body" class="hidden mt-4">
+                    <div id="no-pattern-list" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="error-section" class="hidden card p-5">
+                <div class="collapsible-header" onclick="toggleCollapsible('error')">
+                    <span class="arrow" style="color: var(--bearish);">&#9654;</span>
+                    <div class="w-1 h-5 rounded-full" style="background: var(--bearish);"></div>
+                    <h3 class="text-sm font-bold tracking-wide" style="color: var(--bearish);">エラー</h3>
+                    <span id="error-count" class="tag font-mono" style="background: var(--bearish-dim); color: var(--bearish); border: 1px solid #ff4d6a44; font-size: 10px;">0</span>
+                </div>
+                <div id="error-body" class="hidden mt-4">
+                    <div id="error-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // ============================================================
+    // STATE
+    // ============================================================
+    let errorTimeout = null;
+
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+    function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
+    function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+
+    function showError(msg) {
+        hideError();
+        document.getElementById('error-message').textContent = msg;
+        document.getElementById('error-container').classList.remove('hidden');
+        errorTimeout = setTimeout(hideError, 8000);
+    }
+    function hideError() {
+        document.getElementById('error-container').classList.add('hidden');
+        if (errorTimeout) { clearTimeout(errorTimeout); errorTimeout = null; }
+    }
+
+    function toggleCollapsible(id) {
+        const header = document.querySelector('#' + id + '-section .collapsible-header');
+        const body = document.getElementById(id + '-body');
+        header.classList.toggle('open');
+        body.classList.toggle('hidden');
+    }
+
+    // ============================================================
+    // MAIN SCAN
+    // ============================================================
+    async function scanTickers() {
+        const raw = document.getElementById('tickers-input').value.trim();
+        if (!raw) {
+            showError('銘柄を入力してください');
+            return;
+        }
+
+        const tickers = raw.split(',')
+            .map(function(t) { return t.trim().toUpperCase(); })
+            .filter(function(t) { return t.length > 0; });
+
+        if (tickers.length === 0) {
+            showError('銘柄を入力してください');
+            return;
+        }
+
+        hideError();
+        showLoading();
+        document.getElementById('scan-btn').disabled = true;
+
+        try {
+            var res = await fetch('/screener', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tickers: tickers, candle_count: 3 }),
+            });
+
+            if (!res.ok) {
+                var err = await res.json();
+                throw new Error(err.detail || 'スキャンに失敗しました');
+            }
+
+            var data = await res.json();
+            renderResults(data);
+        } catch (e) {
+            showError(e.message);
+        } finally {
+            hideLoading();
+            document.getElementById('scan-btn').disabled = false;
+        }
+    }
+
+    // ============================================================
+    // RENDER RESULTS
+    // ============================================================
+    function renderResults(data) {
+        var section = document.getElementById('results-section');
+        section.classList.remove('hidden');
+
+        // Categorize results
+        var withPatterns = [];
+        var noPatterns = [];
+        var errors = [];
+
+        data.results.forEach(function(r) {
+            if (r.error) {
+                errors.push(r);
+            } else if (r.patterns.length > 0) {
+                withPatterns.push(r);
+            } else {
+                noPatterns.push(r);
+            }
+        });
+
+        // Sort by pattern count desc
+        withPatterns.sort(function(a, b) { return b.patterns.length - a.patterns.length; });
+
+        var detected = withPatterns.length;
+
+        // Summary bar
+        document.getElementById('summary-total').textContent = data.total;
+        document.getElementById('summary-detected').textContent = detected;
+        document.getElementById('summary-errors').textContent = data.errors;
+        document.getElementById('summary-errors-wrap').classList.toggle('hidden', data.errors === 0);
+
+        // Result cards
+        var grid = document.getElementById('results-grid');
+        grid.innerHTML = '';
+        withPatterns.forEach(function(r, idx) {
+            var card = document.createElement('div');
+            card.className = 'result-card animate-reveal';
+            card.style.animationDelay = (idx * 0.05) + 's';
+            card.onclick = function() { window.location.href = '/?ticker=' + encodeURIComponent(r.ticker); };
+
+            var changePct = r.change_pct != null ? r.change_pct : 0;
+            var isPositive = changePct >= 0;
+            var changeColor = isPositive ? 'var(--bullish)' : 'var(--bearish)';
+            var changeSign = isPositive ? '+' : '';
+
+            var patternTags = r.patterns.map(function(p) {
+                var isBullish = p.direction === 'bullish' || (p.signal && p.signal.indexOf('\u5F37\u6C17') !== -1);
+                var isBearish = p.direction === 'bearish' || (p.signal && p.signal.indexOf('\u5F31\u6C17') !== -1);
+                var isPredicted = p.type === 'predicted';
+                var tagClass = 'tag-bullish';
+                if (isPredicted) tagClass = 'tag-predicted';
+                else if (isBearish) tagClass = 'tag-bearish';
+                return '<span class="tag ' + tagClass + '" style="font-size: 9px; padding: 1px 6px;">' + escapeHtml(p.name) + '</span>';
+            }).join('');
+
+            card.innerHTML =
+                '<div class="flex items-start justify-between mb-3">' +
+                    '<div>' +
+                        '<span class="text-lg font-extrabold font-mono tracking-wider" style="color: var(--text-primary);">' + escapeHtml(r.ticker) + '</span>' +
+                    '</div>' +
+                    '<div class="text-right">' +
+                        '<span class="text-sm font-mono font-semibold" style="color: ' + changeColor + ';">' + changeSign + changePct.toFixed(2) + '%</span>' +
+                        '<p class="text-xs font-mono mt-0.5" style="color: var(--text-muted);">変化率</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="flex items-center gap-2 mb-3">' +
+                    '<span class="text-xs font-mono font-medium" style="color: var(--text-muted);">検出パターン</span>' +
+                    '<span class="tag font-mono" style="background: var(--accent-dim); color: var(--accent); border: 1px solid #6366f144; font-size: 10px;">' + r.patterns.length + '</span>' +
+                '</div>' +
+                '<div class="flex flex-wrap gap-1.5">' +
+                    patternTags +
+                '</div>';
+            grid.appendChild(card);
+        });
+
+        // No patterns section
+        var noPatternSection = document.getElementById('no-pattern-section');
+        if (noPatterns.length > 0) {
+            noPatternSection.classList.remove('hidden');
+            document.getElementById('no-pattern-count').textContent = noPatterns.length;
+            var list = document.getElementById('no-pattern-list');
+            list.innerHTML = noPatterns.map(function(r) {
+                var changePct = r.change_pct != null ? r.change_pct : 0;
+                var isPositive = changePct >= 0;
+                var changeColor = isPositive ? 'var(--bullish)' : 'var(--bearish)';
+                var changeSign = isPositive ? '+' : '';
+                return '<a href="/?ticker=' + encodeURIComponent(r.ticker) + '" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-mono" style="background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); text-decoration: none; transition: all 0.2s;" onmouseover="this.style.borderColor=\'var(--border-glow)\'" onmouseout="this.style.borderColor=\'var(--border-subtle)\'">' +
+                    '<span class="font-bold">' + escapeHtml(r.ticker) + '</span>' +
+                    '<span style="color: ' + changeColor + '; font-size: 11px;">' + changeSign + changePct.toFixed(2) + '%</span>' +
+                '</a>';
+            }).join('');
+        } else {
+            noPatternSection.classList.add('hidden');
+        }
+
+        // Error section
+        var errorSec = document.getElementById('error-section');
+        if (errors.length > 0) {
+            errorSec.classList.remove('hidden');
+            document.getElementById('error-count').textContent = errors.length;
+            var errList = document.getElementById('error-list');
+            errList.innerHTML = errors.map(function(r) {
+                return '<div class="flex items-center gap-3 px-3 py-2 rounded-lg" style="background: var(--bg-base); border: 1px solid var(--border-subtle);">' +
+                    '<span class="font-mono font-bold text-sm" style="color: var(--bearish);">' + escapeHtml(r.ticker) + '</span>' +
+                    '<span class="text-xs font-mono" style="color: var(--text-muted);">' + escapeHtml(r.error || 'Unknown error') + '</span>' +
+                '</div>';
+            }).join('');
+        } else {
+            errorSec.classList.add('hidden');
+        }
+    }
+
+    // ============================================================
+    // ESCAPE HTML
+    // ============================================================
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // ============================================================
+    // KEYBOARD SHORTCUT
+    // ============================================================
+    document.getElementById('tickers-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            scanTickers();
+        }
+    });
+</script>
+
+</body>
+</html>

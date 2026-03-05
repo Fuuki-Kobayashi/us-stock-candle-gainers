@@ -54,9 +54,13 @@ class TestPatternResult:
             name="モーニングスター",
             signal="🔼 強気シグナル",
             description="上昇転換の可能性があります。",
+            direction="bullish",
+            pattern_candle_count=3,
         )
         assert pattern.type == "confirmed"
         assert pattern.required_third is None
+        assert pattern.direction == "bullish"
+        assert pattern.pattern_candle_count == 3
 
     def test_predicted_pattern_with_required_third(self) -> None:
         from app.models.candle import PatternResult
@@ -67,8 +71,102 @@ class TestPatternResult:
             signal="🔼 強気シグナル（予測）",
             description="条件付きパターンです。",
             required_third="3日目に大きな陽線が出現し、1日目の中間点を超えて引ける",
+            direction="bullish",
+            pattern_candle_count=3,
         )
         assert pattern.required_third is not None
+        assert pattern.direction == "bullish"
+        assert pattern.pattern_candle_count == 3
+
+    def test_pattern_result_with_direction_bullish(self) -> None:
+        from app.models.candle import PatternResult
+
+        pattern = PatternResult(
+            type="confirmed",
+            name="テスト",
+            signal="🔼 強気シグナル",
+            description="テスト",
+            direction="bullish",
+            pattern_candle_count=1,
+        )
+        assert pattern.direction == "bullish"
+
+    def test_pattern_result_with_direction_bearish(self) -> None:
+        from app.models.candle import PatternResult
+
+        pattern = PatternResult(
+            type="confirmed",
+            name="テスト",
+            signal="🔽 弱気シグナル",
+            description="テスト",
+            direction="bearish",
+            pattern_candle_count=1,
+        )
+        assert pattern.direction == "bearish"
+
+    def test_pattern_result_with_pattern_candle_count(self) -> None:
+        from app.models.candle import PatternResult
+
+        for count in (1, 2, 3):
+            pattern = PatternResult(
+                type="confirmed",
+                name="テスト",
+                signal="🔼 強気シグナル",
+                description="テスト",
+                direction="bullish",
+                pattern_candle_count=count,
+            )
+            assert pattern.pattern_candle_count == count
+
+    def test_pattern_result_direction_required(self) -> None:
+        from app.models.candle import PatternResult
+
+        with pytest.raises(ValidationError):
+            PatternResult(
+                type="confirmed",
+                name="テスト",
+                signal="🔼 強気シグナル",
+                description="テスト",
+                pattern_candle_count=1,
+            )
+
+    def test_pattern_result_pattern_candle_count_required(self) -> None:
+        from app.models.candle import PatternResult
+
+        with pytest.raises(ValidationError):
+            PatternResult(
+                type="confirmed",
+                name="テスト",
+                signal="🔼 強気シグナル",
+                description="テスト",
+                direction="bullish",
+            )
+
+    def test_pattern_result_invalid_direction(self) -> None:
+        from app.models.candle import PatternResult
+
+        with pytest.raises(ValidationError):
+            PatternResult(
+                type="confirmed",
+                name="テスト",
+                signal="🔼 強気シグナル",
+                description="テスト",
+                direction="neutral",
+                pattern_candle_count=1,
+            )
+
+    def test_pattern_result_invalid_candle_count(self) -> None:
+        from app.models.candle import PatternResult
+
+        with pytest.raises(ValidationError):
+            PatternResult(
+                type="confirmed",
+                name="テスト",
+                signal="🔼 強気シグナル",
+                description="テスト",
+                direction="bullish",
+                pattern_candle_count=4,
+            )
 
 
 # ============================================================

@@ -46,6 +46,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="明けの明星予測",
                 signal="🔼 強気シグナル（予測）",
                 description="明けの明星の初期形成が見られます。",
@@ -58,6 +60,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="明けの十字星予測",
                 signal="🔼 強気シグナル（予測）",
                 description="明けの十字星の初期形成が見られます。",
@@ -75,6 +79,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="捨て子底予測",
                 signal="🔼 強気シグナル（予測）",
                 description="捨て子底の初期形成が見られます。",
@@ -87,6 +93,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="赤三兵予測",
                 signal="🔼 強気シグナル（予測）",
                 description="赤三兵の初期形成が見られます。",
@@ -106,6 +114,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="スリー・インサイド・アップ予測",
                 signal="🔼 強気シグナル（予測）",
                 description="スリー・インサイド・アップの初期形成（はらみ線）が見られます。",
@@ -125,6 +135,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="スリー・アウトサイド・アップ予測",
                 signal="🔼 強気シグナル（予測）",
                 description="スリー・アウトサイド・アップの初期形成（包み線）が見られます。",
@@ -137,6 +149,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="モーニング・ピンバー予測",
                 signal="🔼 強気シグナル（予測）",
                 description="モーニング・ピンバー・リバーサルの初期形成が見られます。",
@@ -149,6 +163,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="三つの星底予測",
                 signal="🔼 強気シグナル（予測）",
                 description="三つの星底の初期形成が見られます。",
@@ -161,6 +177,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="スティック・サンドイッチ予測",
                 signal="🔼 強気シグナル（予測）",
                 description="スティック・サンドイッチの初期形成が見られます。",
@@ -173,6 +191,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="南の三つ星予測",
                 signal="🔼 強気シグナル（予測）",
                 description="南の三つ星の初期形成が見られます。",
@@ -192,6 +212,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="ユニーク・スリー・リバー予測",
                 signal="🔼 強気シグナル（予測）",
                 description="ユニーク・スリー・リバーの初期形成が見られます。",
@@ -204,6 +226,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="下放れ三法予測",
                 signal="🔼 強気シグナル（予測）",
                 description="下放れ三法の初期形成が見られます。",
@@ -216,6 +240,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="上放れタスキ線予測",
                 signal="🔼 強気シグナル（予測）",
                 description="上放れタスキ線の初期形成が見られます。",
@@ -228,6 +254,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="上放れ並び赤予測",
                 signal="🔼 強気シグナル（予測）",
                 description="上放れ並び赤の初期形成が見られます。",
@@ -240,6 +268,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bullish",
+                pattern_candle_count=3,
                 name="インサイドバー上抜け予測",
                 signal="🔼 強気シグナル（予測）",
                 description="インサイドバーの上抜けの初期形成が見られます。",
@@ -256,6 +286,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="宵の明星予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="宵の明星の初期形成が見られます。",
@@ -268,6 +300,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="三羽烏予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="三羽烏の初期形成が見られます。",
@@ -287,6 +321,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="スリー・インサイド・ダウン予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="スリー・インサイド・ダウンの初期形成（はらみ線）が見られます。",
@@ -306,6 +342,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="スリー・アウトサイド・ダウン予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="スリー・アウトサイド・ダウンの初期形成（包み足）が見られます。",
@@ -318,6 +356,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="三つの星天井予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="三つの星天井の初期形成が見られます。",
@@ -336,6 +376,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="南の三つ星（弱気）予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="南の三つ星（弱気）の初期形成が見られます。",
@@ -348,6 +390,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="インサイドバー弱気予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="インサイドバーの弱気ブレイクの初期形成が見られます。",
@@ -360,6 +404,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="スティック・サンドイッチ（弱気）予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="スティック・サンドイッチ（弱気）の初期形成が見られます。",
@@ -377,6 +423,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="ユニーク・スリー星・リバー（弱気）予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="ユニーク・スリー星・リバー（弱気）の初期形成が見られます。",
@@ -389,6 +437,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="最後の抱き線（弱気）予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="最後の抱き線（弱気）の初期形成が見られます。",
@@ -407,6 +457,8 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
         results.append(
             PatternResult(
                 type="predicted",
+                direction="bearish",
+                pattern_candle_count=3,
                 name="窓開け後あて首継続予測",
                 signal="🔽 弱気シグナル（予測）",
                 description="窓開け後のあて首継続パターンの初期形成が見られます。",

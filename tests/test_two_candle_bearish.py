@@ -21,6 +21,8 @@ def test_bearish_engulfing_detected():
     match = next(r for r in results if r.name == "陰の陽包み")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.direction == "bearish"
+    assert match.pattern_candle_count == 2
 
 
 def test_bearish_engulfing_not_detected_partial():
