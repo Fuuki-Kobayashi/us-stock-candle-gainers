@@ -26,6 +26,8 @@ def test_morning_star_predicted():
     assert match.type == "predicted"
     assert match.signal == "🔼 強気シグナル（予測）"
     assert match.required_third == "3本目に大陽線が出現すれば明けの明星が完成"
+    assert match.direction == "bullish"
+    assert match.pattern_candle_count == 3
 
 
 def test_morning_star_predicted_not_detected():
@@ -261,6 +263,8 @@ def test_evening_star_predicted():
     assert match.type == "predicted"
     assert match.signal == "🔽 弱気シグナル（予測）"
     assert match.required_third == "3本目に大陰線が出現すれば宵の明星が完成"
+    assert match.direction == "bearish"
+    assert match.pattern_candle_count == 3
 
 
 def test_evening_star_predicted_not_detected():

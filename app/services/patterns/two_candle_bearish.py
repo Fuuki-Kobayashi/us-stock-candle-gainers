@@ -45,6 +45,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="陰の陽包み",
                 signal=_SIGNAL,
                 description="大陰線が前日の陽線を完全に包み込む、最も強い弱気シグナルです。",
@@ -64,6 +66,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="陰の陽はらみ",
                 signal=_SIGNAL,
                 description="大陽線の中に小さな陰線が収まり、上昇の減速を示唆します。",
@@ -81,6 +85,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="かぶせ線",
                 signal=_SIGNAL,
                 description="高値で始まり、前日の中間点以下まで押し戻される弱気パターンです。",
@@ -93,6 +99,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="毛抜き天井",
                 signal=_SIGNAL,
                 description="同じ高値で抵抗された2本のローソク足で、天井を示唆します。",
@@ -111,6 +119,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="出会い線（弱気）",
                 signal=_SIGNAL,
                 description="大陽線と大陰線が同じ終値付近で引け、買い勢力の押し戻しを示唆します。",
@@ -128,6 +138,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="最後の抱き線（弱気）",
                 signal=_SIGNAL,
                 description="上昇トレンド中の最後の買い仕掛けで、反転下落を示唆します。",
@@ -145,6 +157,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="差し込み線",
                 signal=_SIGNAL,
                 description="弱い買い戻しで半値にも届かず、下落の継続を示唆します。",
@@ -163,6 +177,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="あて首線",
                 signal=_SIGNAL,
                 description="大陰線の後の陽線が前日の終値付近まで戻すだけで、弱い反発です。",
@@ -183,6 +199,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="入り首線",
                 signal=_SIGNAL,
                 description="大陰線の後の陽線がボディにわずかに入るだけで、弱い反発です。",
@@ -201,6 +219,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="行き違い線（弱気）",
                 signal=_SIGNAL,
                 description="ヒゲなし大陽線の後に窓を開けてヒゲなし大陰線が出現、パニック的下落です。",
@@ -213,6 +233,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="振り分線",
                 signal=_SIGNAL,
                 description="同じ始値から陽線と陰線に分かれ、売り圧力の強さを示唆します。",
@@ -225,6 +247,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="下降の窓開け突破",
                 signal=_SIGNAL,
                 description="下方に窓を開けて大陰線が出現、下落加速を示唆します。",
@@ -237,6 +261,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="下放れ並び黒",
                 signal=_SIGNAL,
                 description="2本の陰線が並び、下落の継続を示唆します。",
@@ -249,6 +275,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="下放れタスキ線",
                 signal=_SIGNAL,
                 description="陰線の後の陽線が窓を埋めきれず、下落の継続を示唆します。",
@@ -268,6 +296,8 @@ def detect_2_candle_bearish(c0: CandleData, c1: CandleData) -> list[PatternResul
         results.append(
             PatternResult(
                 type=_TYPE,
+                direction="bearish",
+                pattern_candle_count=2,
                 name="陰の陽はらみ（弱気バリアント）",
                 signal=_SIGNAL,
                 description="大陽線の中に陰線が収まり、終値が前日終値を下回る弱気パターンです。",

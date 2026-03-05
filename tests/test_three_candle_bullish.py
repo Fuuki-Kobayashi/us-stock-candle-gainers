@@ -26,6 +26,8 @@ def test_morning_star_detected():
     match = next(r for r in results if r.name == "明けの明星")
     assert match.type == "confirmed"
     assert match.signal == "🔼 強気シグナル"
+    assert match.direction == "bullish"
+    assert match.pattern_candle_count == 3
 
 
 def test_morning_star_not_detected_c2_not_large():

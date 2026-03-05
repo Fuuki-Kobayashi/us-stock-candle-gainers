@@ -22,6 +22,8 @@ def test_bullish_engulfing_detected():
     match = next(r for r in results if r.name == "包み線（抱き線）")
     assert match.type == "confirmed"
     assert match.signal == "🔼 強気シグナル"
+    assert match.direction == "bullish"
+    assert match.pattern_candle_count == 2
 
 
 def test_bullish_engulfing_not_detected_partial():
