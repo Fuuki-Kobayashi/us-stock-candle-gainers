@@ -6,88 +6,312 @@
     <title>US Stock Candle Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+        :root {
+            --bg-deep: #060a12;
+            --bg-base: #0b1120;
+            --bg-surface: #111827;
+            --bg-card: #151d30;
+            --bg-card-hover: #1a2540;
+            --border-subtle: #1e293b;
+            --border-glow: #1e3a5f;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --bullish: #00e5a0;
+            --bullish-dim: #00e5a033;
+            --bullish-glow: #00e5a066;
+            --bearish: #ff4d6a;
+            --bearish-dim: #ff4d6a33;
+            --bearish-glow: #ff4d6a66;
+            --accent: #6366f1;
+            --accent-dim: #6366f133;
+            --predicted: #a78bfa;
+            --predicted-dim: #a78bfa22;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.025;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* Scanline effect */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9998;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+            );
+        }
+
+        .font-mono { font-family: 'IBM Plex Mono', monospace; }
+
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+
         .scrollbar-thin::-webkit-scrollbar { height: 6px; }
-        .scrollbar-thin::-webkit-scrollbar-track { background: #1e2538; border-radius: 3px; }
-        .scrollbar-thin::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: var(--bg-base); border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+
+        /* Glow cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+        }
+
+        /* Pattern card glow */
+        .pattern-card-bullish { border-left: 3px solid var(--bullish); }
+        .pattern-card-bullish:hover { box-shadow: 0 0 20px var(--bullish-dim), inset 0 0 20px var(--bullish-dim); }
+        .pattern-card-bearish { border-left: 3px solid var(--bearish); }
+        .pattern-card-bearish:hover { box-shadow: 0 0 20px var(--bearish-dim), inset 0 0 20px var(--bearish-dim); }
+
+        /* Staggered reveal */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-reveal {
+            animation: fadeSlideUp 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        /* Glow pulse for risk badges */
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+
+        /* Input focus glow */
+        .input-field {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            outline: none;
+            width: 100%;
+        }
+        .input-field::placeholder { color: var(--text-muted); }
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        /* Tag pills */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .tag-confirmed {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid #6366f144;
+        }
+        .tag-predicted {
+            background: var(--predicted-dim);
+            color: var(--predicted);
+            border: 1px solid #a78bfa33;
+        }
+
+        /* Filter buttons */
+        .filter-btn {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .filter-btn-active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        .filter-btn-inactive {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-color: var(--border-subtle);
+        }
+        .filter-btn-inactive:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+
+        /* Analyze button */
+        .btn-analyze {
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: white;
+            font-weight: 700;
+            padding: 12px 32px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Sora', sans-serif;
+            font-size: 15px;
+            letter-spacing: 0.02em;
+        }
+        .btn-analyze:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+        }
+        .btn-analyze:active { transform: translateY(0); }
+
+        /* Mode selector */
+        .mode-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            color: var(--text-muted);
+        }
+        .mode-btn-active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-dim);
+        }
+
+        /* Metric card */
+        .metric-card {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        /* Chart canvas container */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+        }
     </style>
 </head>
-<body class="bg-[#0a0e1a] text-slate-100 min-h-screen">
+<body>
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-[#0a0e1a]/80 z-50 flex items-center justify-center hidden">
+    <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background: rgba(6,10,18,0.85); backdrop-filter: blur(4px);">
         <div class="text-center">
-            <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-xl text-slate-200 font-bold">分析中...</p>
-            <p class="text-slate-400 mt-1">データを取得しています</p>
+            <div class="inline-block w-14 h-14 border-[3px] rounded-full animate-spin mb-5" style="border-color: var(--accent); border-top-color: transparent;"></div>
+            <p class="text-xl font-bold" style="color: var(--text-primary);">Analyzing...</p>
+            <p class="text-sm mt-1 font-mono" style="color: var(--text-muted);">Fetching market data</p>
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div class="max-w-[1440px] mx-auto px-6 py-8 space-y-6 relative z-10">
 
         <!-- Header -->
-        <header class="text-center mb-2">
-            <h1 class="text-3xl font-bold text-slate-100">US Stock Candle Analysis</h1>
-            <p class="text-slate-400 mt-1">ローソク足パターン認識 &amp; リスク分析ツール</p>
+        <header class="text-center mb-4 pt-4">
+            <div class="inline-flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, var(--bullish), var(--accent));">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight" style="background: linear-gradient(135deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    US Stock Candle Analysis
+                </h1>
+            </div>
+            <p class="text-sm font-mono" style="color: var(--text-muted); letter-spacing: 0.15em;">CANDLESTICK PATTERN RECOGNITION &amp; RISK ANALYSIS</p>
         </header>
 
         <!-- Input Form -->
-        <section class="bg-[#1e2538] rounded-xl p-6">
-            <div class="space-y-4">
+        <section class="card p-6">
+            <div class="space-y-5">
                 <!-- Ticker -->
                 <div>
-                    <label for="ticker" class="block text-sm font-medium text-slate-400 mb-1">ティッカーシンボル</label>
-                    <input type="text" id="ticker" placeholder="例: AAPL, TSLA, GME"
-                        class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-3 text-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 uppercase"
-                        style="text-transform: uppercase;">
+                    <label for="ticker" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Ticker Symbol</label>
+                    <input type="text" id="ticker" placeholder="AAPL, TSLA, GME ..."
+                        class="input-field text-lg font-mono font-semibold tracking-wider"
+                        style="text-transform: uppercase; font-size: 18px; padding: 14px 20px;">
                 </div>
                 <!-- Day Inputs -->
-                <div class="grid sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label for="day1" class="block text-sm font-medium text-slate-400 mb-1">Day1 変化率 (%)</label>
-                        <input type="number" step="0.1" id="day1" placeholder="例: 5.2"
-                            class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="day2" class="block text-sm font-medium text-slate-400 mb-1">Day2 変化率 (%)</label>
-                        <input type="number" step="0.1" id="day2" placeholder="例: -3.1"
-                            class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <label for="day1" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day1 Change (%)</label>
+                        <input type="number" step="0.1" id="day1" placeholder="5.2" class="input-field font-mono">
                     </div>
                     <div>
-                        <label for="day3" class="block text-sm font-medium text-slate-400 mb-1">Day3 変化率 (%)</label>
-                        <input type="number" step="0.1" id="day3" placeholder="例: 2.0"
-                            class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <label for="day2" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day2 Change (%)</label>
+                        <input type="number" step="0.1" id="day2" placeholder="-3.1" class="input-field font-mono">
                     </div>
-                </div>
-                <!-- Candle Count Selector (realdata mode only) -->
-                <div id="candle-count-selector" class="mb-4">
-                    <label class="text-sm text-gray-400 mb-2 block">分析モード</label>
-                    <div class="flex gap-2">
-                        <button id="btn-2candle" type="button"
-                                class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">
-                            2本分析
-                        </button>
-                        <button id="btn-3candle" type="button"
-                                class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                            3本分析
-                        </button>
+                    <div>
+                        <label for="day3" class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Day3 Change (%)</label>
+                        <input type="number" step="0.1" id="day3" placeholder="2.0" class="input-field font-mono">
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">
-                        <span id="mode-desc">3本: 確定パターン（1+2+3本足）を検出</span>
-                    </p>
                 </div>
 
-                <!-- Mode Badge + Button -->
-                <div class="flex items-center justify-between flex-wrap gap-3">
-                    <span id="mode-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
-                        リアルデータモード
-                    </span>
-                    <button id="analyze-btn" onclick="analyze()"
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg px-8 py-3 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#1e2538]">
-                        分析する
+                <!-- Candle Count + Mode + Button row -->
+                <div class="flex items-end justify-between flex-wrap gap-4">
+                    <div class="flex items-center gap-6 flex-wrap">
+                        <!-- Candle Count Selector -->
+                        <div id="candle-count-selector">
+                            <label class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">Analysis Mode</label>
+                            <div class="flex gap-2">
+                                <button id="btn-2candle" type="button" class="mode-btn">2-Candle</button>
+                                <button id="btn-3candle" type="button" class="mode-btn mode-btn-active">3-Candle</button>
+                            </div>
+                        </div>
+                        <!-- Mode Badge -->
+                        <div class="flex items-center gap-2 pt-5">
+                            <div class="w-2 h-2 rounded-full glow-pulse" id="mode-dot" style="background: var(--accent);"></div>
+                            <span id="mode-badge" class="text-xs font-mono font-medium tracking-wider" style="color: var(--accent);">REALDATA MODE</span>
+                        </div>
+                    </div>
+                    <button id="analyze-btn" onclick="analyze()" class="btn-analyze">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Analyze
+                        </span>
                     </button>
                 </div>
             </div>
@@ -95,15 +319,15 @@
 
         <!-- Error Container -->
         <div id="error-container" class="hidden">
-            <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center justify-between">
+            <div class="card p-4 flex items-center justify-between" style="border-color: var(--bearish); border-left: 3px solid var(--bearish);">
                 <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 flex-shrink-0" style="color: var(--bearish);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <p id="error-message" class="text-red-400"></p>
+                    <p id="error-message" class="text-sm" style="color: var(--bearish);"></p>
                 </div>
-                <button onclick="hideError()" class="text-red-400 hover:text-red-300 flex-shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button onclick="hideError()" class="flex-shrink-0 p-1 rounded hover:bg-white/5" style="color: var(--bearish);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
@@ -111,46 +335,55 @@
         </div>
 
         <!-- Empty State -->
-        <div id="empty-state" class="text-center py-20">
-            <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
-            </svg>
-            <p class="text-slate-400 text-lg">ティッカーシンボルを入力して分析を開始してください</p>
+        <div id="empty-state" class="text-center py-24">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6" style="background: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                <svg class="w-10 h-10" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+                </svg>
+            </div>
+            <p class="text-lg font-medium" style="color: var(--text-secondary);">Enter a ticker symbol to begin analysis</p>
+            <p class="text-sm font-mono mt-2" style="color: var(--text-muted);">CANDLESTICK PATTERNS &bull; SHORT INTEREST &bull; RISK METRICS</p>
         </div>
 
         <!-- Results Section -->
         <div id="results-section" class="hidden space-y-6">
 
             <!-- Mode Bar -->
-            <div id="mode-bar" class="bg-[#1e2538] rounded-lg px-5 py-3 flex items-center gap-3">
-                <span id="mode-bar-ticker" class="text-xl font-bold text-slate-100"></span>
-                <span class="text-slate-500">-</span>
-                <span id="mode-bar-text" class="text-slate-400"></span>
+            <div id="mode-bar" class="card px-6 py-4 flex items-center gap-4">
+                <span id="mode-bar-ticker" class="text-2xl font-extrabold font-mono tracking-wider" style="color: var(--text-primary);"></span>
+                <div class="w-px h-6" style="background: var(--border-subtle);"></div>
+                <span id="mode-bar-text" class="text-sm font-medium" style="color: var(--text-secondary);"></span>
             </div>
 
-            <!-- Candlestick Chart -->
-            <div id="chart-section" class="hidden mb-6">
-                <h3 class="text-lg font-semibold text-white mb-3">ローソク足チャート</h3>
-                <canvas id="candle-chart" class="rounded-lg" style="max-width: 600px; height: 300px;"></canvas>
+            <!-- Candlestick Chart (full width) -->
+            <div id="chart-section" class="hidden animate-reveal">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-1 h-5 rounded-full" style="background: var(--accent);"></div>
+                    <h3 class="text-base font-bold tracking-wide" style="color: var(--text-primary);">Candlestick Chart</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="candle-chart"></canvas>
+                </div>
             </div>
 
-            <!-- Candle Table + Short Interest -->
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
-                <!-- Candle Table (3/5) -->
-                <div class="lg:col-span-3 bg-[#1e2538] rounded-xl p-5">
-                    <h2 class="text-lg font-bold text-slate-200 mb-4">ローソク足データ</h2>
+            <!-- Data Grid: Candle Table + Short Interest -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Candle Table (2/3) -->
+                <div class="lg:col-span-2 card p-5 animate-reveal" style="animation-delay: 0.05s;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-1 h-5 rounded-full" style="background: var(--accent);"></div>
+                        <h2 class="text-base font-bold tracking-wide">OHLCV Data</h2>
+                    </div>
                     <div class="overflow-x-auto scrollbar-thin">
-                        <table id="candle-table" class="w-full text-sm">
+                        <table id="candle-table" class="w-full text-sm font-mono">
                             <thead>
-                                <tr class="text-slate-400 border-b border-slate-700">
-                                    <th class="text-left py-2 px-3 font-medium">日付</th>
-                                    <th class="text-right py-2 px-3 font-medium">始値</th>
-                                    <th class="text-right py-2 px-3 font-medium">高値</th>
-                                    <th class="text-right py-2 px-3 font-medium">安値</th>
-                                    <th class="text-right py-2 px-3 font-medium">終値</th>
-                                    <th class="text-right py-2 px-3 font-medium">出来高</th>
+                                <tr style="color: var(--text-muted); border-bottom: 1px solid var(--border-subtle);">
+                                    <th class="text-left py-3 px-4 font-medium text-xs tracking-wider uppercase">Date</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Open</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">High</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Low</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Close</th>
+                                    <th class="text-right py-3 px-4 font-medium text-xs tracking-wider uppercase">Volume</th>
                                 </tr>
                             </thead>
                             <tbody id="candle-tbody"></tbody>
@@ -158,135 +391,211 @@
                     </div>
                 </div>
 
-                <!-- Short Interest (2/5) -->
-                <div id="short-interest-section" class="lg:col-span-2 bg-[#1e2538] rounded-xl p-5">
-                    <h2 class="text-lg font-bold text-slate-200 mb-4">空売りデータ</h2>
-                    <div id="short-interest-grid" class="grid grid-cols-2 gap-4"></div>
-                    <div id="atr-section" class="mt-4 pt-4 border-t border-slate-700"></div>
+                <!-- Short Interest (1/3) -->
+                <div id="short-interest-section" class="card p-5 animate-reveal" style="animation-delay: 0.1s;">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-1 h-5 rounded-full" style="background: var(--bearish);"></div>
+                        <h2 class="text-base font-bold tracking-wide">Short Interest</h2>
+                    </div>
+                    <div id="short-interest-grid" class="space-y-3"></div>
+                    <div id="atr-section" class="mt-4 pt-4" style="border-top: 1px solid var(--border-subtle);"></div>
                 </div>
             </div>
 
             <!-- Patterns Section -->
-            <div id="patterns-container" class="bg-[#1e2538] rounded-xl p-5">
-                <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
-                    <h2 class="text-lg font-bold text-slate-200">検出パターン</h2>
+            <div id="patterns-container" class="card p-6 animate-reveal" style="animation-delay: 0.15s;">
+                <div class="flex items-center justify-between flex-wrap gap-4 mb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-1 h-5 rounded-full" style="background: var(--bullish);"></div>
+                        <h2 class="text-base font-bold tracking-wide">Detected Patterns</h2>
+                        <span id="pattern-count" class="tag tag-confirmed font-mono" style="font-size: 10px;">0</span>
+                    </div>
                     <div class="flex gap-2">
-                        <button id="pattern-filter-all" onclick="filterPatterns('all')"
-                            class="px-3 py-1 rounded-lg text-sm font-medium bg-blue-500 text-white transition-colors">全て</button>
-                        <button id="pattern-filter-confirmed" onclick="filterPatterns('confirmed')"
-                            class="px-3 py-1 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">確定</button>
-                        <button id="pattern-filter-predicted" onclick="filterPatterns('predicted')"
-                            class="px-3 py-1 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors">予測</button>
+                        <button id="pattern-filter-all" onclick="filterPatterns('all')" class="filter-btn filter-btn-active">ALL</button>
+                        <button id="pattern-filter-confirmed" onclick="filterPatterns('confirmed')" class="filter-btn filter-btn-inactive">CONFIRMED</button>
+                        <button id="pattern-filter-predicted" onclick="filterPatterns('predicted')" class="filter-btn filter-btn-inactive">PREDICTED</button>
                     </div>
                 </div>
-                <div id="patterns-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-                <div id="patterns-empty" class="hidden text-center py-8 text-slate-500">パターンは検出されませんでした</div>
+                <div id="patterns-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                <div id="patterns-empty" class="hidden text-center py-12" style="color: var(--text-muted);">
+                    <p class="font-mono text-sm">NO PATTERNS DETECTED</p>
+                </div>
             </div>
 
             <!-- Risk Analysis -->
             <div id="risk-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
 
             <!-- Save Button -->
-            <div class="text-center">
-                <button id="save-btn" onclick="saveImage()"
-                    class="bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg px-6 py-3 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500">
-                    画像として保存
+            <div class="text-center pt-2 pb-8">
+                <button id="save-btn" onclick="saveImage()" class="card px-8 py-3 text-sm font-medium cursor-pointer" style="color: var(--text-secondary);">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Save as Image
+                    </span>
                 </button>
             </div>
         </div>
     </div>
 
 <script>
-    // --- State ---
+    // ============================================================
+    // MINI CANDLESTICK PATTERN SHAPES
+    // Each candle: { o, h, l, c } on 0-100 scale (0=bottom, 100=top)
+    // ============================================================
+    const PATTERN_SHAPES = {
+        // 1-candle bearish
+        'ベアリッシュ・ピンバー': [{o:35,h:95,l:30,c:32}],
+        'トウバ（墓石十字）': [{o:15,h:95,l:12,c:15}],
+        '首吊り線': [{o:80,h:85,l:10,c:78}],
+        '流れ星': [{o:25,h:95,l:20,c:22}],
+
+        // 2-candle bullish
+        '包み線（抱き線）': [{o:65,h:68,l:38,c:40},{o:35,h:80,l:32,c:78}],
+        'はらみ線': [{o:75,h:80,l:20,c:22},{o:30,h:50,l:28,c:48}],
+        'はらみ寄せ線': [{o:75,h:80,l:20,c:22},{o:38,h:42,l:35,c:38}],
+        '切り込み線': [{o:70,h:75,l:25,c:28},{o:18,h:62,l:15,c:58}],
+        '毛抜き底': [{o:60,h:65,l:20,c:25},{o:25,h:55,l:20,c:52}],
+        '出会い線（逆襲線）': [{o:65,h:68,l:35,c:38},{o:30,h:42,l:28,c:38}],
+        '並び底（ズバリ線）': [{o:60,h:62,l:30,c:32},{o:55,h:58,l:30,c:32}],
+        '鳩の帰巣': [{o:70,h:75,l:25,c:28},{o:55,h:58,l:30,c:32}],
+        '最後の抱き線': [{o:35,h:55,l:32,c:52},{o:60,h:62,l:20,c:22}],
+        'タスキ底': [{o:60,h:62,l:30,c:32},{o:38,h:65,l:35,c:62}],
+        'ダブル・ピンバー': [{o:35,h:38,l:5,c:32},{o:30,h:35,l:5,c:32}],
+        '行き違い線（キッキング）': [{o:70,h:72,l:30,c:32},{o:45,h:80,l:42,c:78}],
+        '振り分け線': [{o:50,h:52,l:25,c:28},{o:50,h:75,l:48,c:72}],
+        '陽の陽はらみ': [{o:25,h:70,l:22,c:68},{o:35,h:55,l:32,c:52}],
+        'ブレイクアウェイ・ギャップ': [{o:55,h:58,l:30,c:32},{o:45,h:78,l:42,c:75}],
+
+        // 2-candle bearish
+        '陰の陽包み': [{o:40,h:62,l:38,c:60},{o:68,h:70,l:22,c:25}],
+        '陰の陽はらみ': [{o:25,h:78,l:22,c:75},{o:65,h:68,l:50,c:52}],
+        'かぶせ線': [{o:28,h:68,l:25,c:65},{o:72,h:78,l:38,c:40}],
+        '毛抜き天井': [{o:40,h:80,l:35,c:75},{o:75,h:80,l:45,c:48}],
+        '出会い線（弱気）': [{o:35,h:62,l:32,c:60},{o:70,h:72,l:58,c:60}],
+        '最後の抱き線（弱気）': [{o:55,h:58,l:35,c:38},{o:30,h:72,l:28,c:70}],
+        '差し込み線': [{o:68,h:70,l:28,c:30},{o:22,h:42,l:18,c:40}],
+        'あて首線': [{o:68,h:70,l:28,c:30},{o:22,h:35,l:18,c:32}],
+        '入り首線': [{o:68,h:70,l:28,c:30},{o:22,h:38,l:18,c:35}],
+        '行き違い線（弱気）': [{o:30,h:70,l:28,c:68},{o:55,h:58,l:20,c:22}],
+        '振り分線': [{o:50,h:75,l:48,c:72},{o:50,h:52,l:25,c:28}],
+        '下降の窓開け突破': [{o:50,h:78,l:48,c:75},{o:42,h:45,l:18,c:20}],
+        '下放れ並び黒': [{o:60,h:62,l:35,c:38},{o:30,h:32,l:10,c:12}],
+        '下放れタスキ線': [{o:55,h:58,l:30,c:32},{o:25,h:45,l:22,c:42}],
+        '陰の陽はらみ（弱気バリアント）': [{o:25,h:75,l:22,c:72},{o:62,h:65,l:48,c:50}],
+
+        // 3-candle bullish
+        '明けの明星': [{o:72,h:75,l:35,c:38},{o:28,h:32,l:15,c:20},{o:28,h:75,l:25,c:72}],
+        '明けの十字星': [{o:72,h:75,l:35,c:38},{o:20,h:25,l:12,c:20},{o:28,h:75,l:25,c:72}],
+        '捨て子底': [{o:72,h:75,l:35,c:38},{o:18,h:22,l:8,c:18},{o:32,h:75,l:28,c:72}],
+        '赤三兵': [{o:18,h:38,l:15,c:35},{o:38,h:58,l:35,c:55},{o:58,h:82,l:55,c:80}],
+        'スリー・インサイド・アップ': [{o:72,h:78,l:22,c:25},{o:30,h:50,l:28,c:48},{o:52,h:80,l:50,c:78}],
+        'スリー・アウトサイド・アップ': [{o:55,h:58,l:42,c:45},{o:38,h:68,l:35,c:65},{o:68,h:85,l:65,c:82}],
+        'モーニング・ピンバー・リバーサル': [{o:70,h:72,l:35,c:38},{o:32,h:35,l:5,c:30},{o:35,h:72,l:32,c:70}],
+        '三つの星底': [{o:22,h:28,l:15,c:22},{o:18,h:25,l:10,c:18},{o:15,h:22,l:8,c:15}],
+        'スティック・サンドイッチ': [{o:55,h:58,l:28,c:30},{o:35,h:58,l:32,c:55},{o:60,h:62,l:28,c:30}],
+        '南の三つ星': [{o:72,h:75,l:25,c:28},{o:62,h:65,l:30,c:32},{o:52,h:55,l:35,c:38}],
+        'ユニーク・スリー・リバー': [{o:72,h:75,l:28,c:30},{o:60,h:62,l:35,c:38},{o:42,h:52,l:40,c:50}],
+        '下放れ三法': [{o:65,h:68,l:35,c:38},{o:28,h:35,l:25,c:32},{o:35,h:72,l:32,c:70}],
+        '上放れタスキ線': [{o:30,h:52,l:28,c:50},{o:55,h:72,l:52,c:70},{o:68,h:70,l:52,c:55}],
+        '上放れ並び赤': [{o:30,h:52,l:28,c:50},{o:55,h:70,l:52,c:68},{o:60,h:80,l:58,c:78}],
+        'インサイドバーの上抜け': [{o:30,h:70,l:25,c:65},{o:40,h:55,l:38,c:52},{o:55,h:82,l:52,c:80}],
+
+        // 3-candle bearish
+        '宵の明星': [{o:28,h:65,l:25,c:62},{o:70,h:85,l:68,c:75},{o:72,h:75,l:28,c:30}],
+        '三羽烏（黒三兵）': [{o:82,h:85,l:62,c:65},{o:62,h:65,l:42,c:45},{o:42,h:45,l:18,c:20}],
+        'スリー・インサイド・ダウン': [{o:28,h:78,l:25,c:75},{o:68,h:70,l:48,c:50},{o:48,h:50,l:20,c:22}],
+        'スリー・アウトサイド・ダウン': [{o:45,h:58,l:42,c:55},{o:62,h:65,l:32,c:35},{o:32,h:35,l:15,c:18}],
+        '三つの星天井': [{o:78,h:85,l:72,c:78},{o:82,h:88,l:75,c:82},{o:85,h:92,l:78,c:85}],
+        '南の三つ星（弱気）': [{o:72,h:75,l:20,c:28},{o:65,h:68,l:28,c:32},{o:55,h:58,l:32,c:38}],
+        'インサイドバーの弱気ブレイク': [{o:70,h:75,l:30,c:35},{o:60,h:65,l:40,c:45},{o:38,h:42,l:15,c:18}],
+        'スティック・サンドイッチ（弱気）': [{o:30,h:68,l:28,c:65},{o:60,h:62,l:30,c:32},{o:38,h:70,l:35,c:68}],
+        'ユニーク・スリー星・リバー（弱気）': [{o:28,h:72,l:25,c:70},{o:38,h:65,l:35,c:62},{o:58,h:60,l:48,c:50}],
+        '最後の抱き線（弱気）': [{o:55,h:58,l:35,c:38},{o:32,h:72,l:28,c:70}],
+        '窓開け後の「あて首」継続': [{o:65,h:68,l:28,c:30},{o:25,h:35,l:22,c:32},{o:52,h:55,l:22,c:25}],
+    };
+
+    // ============================================================
+    // STATE
+    // ============================================================
     let currentTicker = '';
     let errorTimeout = null;
     let selectedCandleCount = 3;
+    let activeFilter = 'all';
 
-    // --- Mode Badge Update ---
+    // ============================================================
+    // MODE BADGE
+    // ============================================================
     function updateModeBadge() {
         const badge = document.getElementById('mode-badge');
+        const dot = document.getElementById('mode-dot');
         const d1 = document.getElementById('day1').value.trim();
         const d2 = document.getElementById('day2').value.trim();
         const d3 = document.getElementById('day3').value.trim();
 
         if (d1 !== '' && d2 !== '' && d3 !== '') {
-            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400';
-            badge.textContent = 'シミュレーション（確定）モード';
+            badge.textContent = 'SIMULATION (CONFIRMED)';
+            badge.style.color = dot.style.background = 'var(--bullish)';
         } else if (d1 !== '' && d2 !== '') {
-            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-500/20 text-purple-400';
-            badge.textContent = 'シミュレーション（予測）モード';
+            badge.textContent = 'SIMULATION (PREDICTED)';
+            badge.style.color = dot.style.background = 'var(--predicted)';
         } else {
-            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400';
-            badge.textContent = 'リアルデータモード';
+            badge.textContent = 'REALDATA MODE';
+            badge.style.color = dot.style.background = 'var(--accent)';
         }
     }
 
-    document.getElementById('day1').addEventListener('input', updateModeBadge);
-    document.getElementById('day2').addEventListener('input', updateModeBadge);
-    document.getElementById('day3').addEventListener('input', updateModeBadge);
-
-    // --- Candle Count Selector ---
+    // ============================================================
+    // CANDLE COUNT SELECTOR
+    // ============================================================
     function updateCandleCountSelector() {
         const d1 = document.getElementById('day1').value.trim();
         const d2 = document.getElementById('day2').value.trim();
         const selector = document.getElementById('candle-count-selector');
-        if (d1 !== '' && d2 !== '') {
-            selector.classList.add('hidden');
-        } else {
-            selector.classList.remove('hidden');
-        }
+        selector.classList.toggle('hidden', d1 !== '' && d2 !== '');
     }
 
     function selectCandleCount(count) {
         selectedCandleCount = count;
         const btn2 = document.getElementById('btn-2candle');
         const btn3 = document.getElementById('btn-3candle');
-        const desc = document.getElementById('mode-desc');
-
         if (count === 2) {
-            btn2.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors';
-            btn3.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors';
-            desc.textContent = '2本: 確定パターン（1+2本足）+ 予測パターンを検出';
+            btn2.classList.add('mode-btn-active');
+            btn3.classList.remove('mode-btn-active');
         } else {
-            btn3.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors';
-            btn2.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors';
-            desc.textContent = '3本: 確定パターン（1+2+3本足）を検出';
+            btn3.classList.add('mode-btn-active');
+            btn2.classList.remove('mode-btn-active');
         }
     }
 
+    // Event listeners
     document.getElementById('btn-2candle').addEventListener('click', () => selectCandleCount(2));
     document.getElementById('btn-3candle').addEventListener('click', () => selectCandleCount(3));
-    document.getElementById('day1').addEventListener('input', updateCandleCountSelector);
-    document.getElementById('day2').addEventListener('input', updateCandleCountSelector);
-    document.getElementById('day3').addEventListener('input', updateCandleCountSelector);
-
-    // Enter key triggers analysis
+    ['day1','day2','day3'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => { updateModeBadge(); updateCandleCountSelector(); });
+    });
     document.querySelectorAll('#ticker, #day1, #day2, #day3').forEach(el => {
-        el.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') analyze();
-        });
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') analyze(); });
     });
 
-    // --- Utility Functions ---
-    function formatPrice(val) {
-        if (val == null) return 'N/A';
-        return '$' + Number(val).toFixed(2);
-    }
-
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+    function formatPrice(val) { return val == null ? 'N/A' : '$' + Number(val).toFixed(2); }
     function formatVolume(vol) {
         if (vol === 0) return '-';
-        if (vol >= 1e9) return (vol / 1e9).toFixed(1) + 'B';
-        if (vol >= 1e6) return (vol / 1e6).toFixed(1) + 'M';
-        if (vol >= 1e3) return (vol / 1e3).toFixed(1) + 'K';
+        if (vol >= 1e9) return (vol/1e9).toFixed(1)+'B';
+        if (vol >= 1e6) return (vol/1e6).toFixed(1)+'M';
+        if (vol >= 1e3) return (vol/1e3).toFixed(1)+'K';
         return vol.toString();
     }
-
     function formatNumber(val) {
         if (val == null) return 'N/A';
         if (typeof val === 'number') {
-            if (val >= 1e9) return (val / 1e9).toFixed(2) + 'B';
-            if (val >= 1e6) return (val / 1e6).toFixed(2) + 'M';
-            if (val >= 1e3) return (val / 1e3).toFixed(1) + 'K';
+            if (val >= 1e9) return (val/1e9).toFixed(2)+'B';
+            if (val >= 1e6) return (val/1e6).toFixed(2)+'M';
+            if (val >= 1e3) return (val/1e3).toFixed(1)+'K';
             return val.toLocaleString();
         }
         return val;
@@ -295,505 +604,509 @@
     function riskBadge(level) {
         if (!level) return '';
         const map = {
-            '低': 'bg-green-500/20 text-green-400 border border-green-500/30',
-            '中': 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
-            '高': 'bg-red-500/20 text-red-400 border border-red-500/30',
+            '低': { bg: 'var(--bullish-dim)', color: 'var(--bullish)', border: 'var(--bullish)' },
+            '中': { bg: '#eab30822', color: '#eab308', border: '#eab308' },
+            '高': { bg: 'var(--bearish-dim)', color: 'var(--bearish)', border: 'var(--bearish)' },
         };
-        const cls = map[level] || 'bg-slate-700 text-slate-400';
-        return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}">${level}</span>`;
+        const s = map[level] || { bg: 'var(--bg-card)', color: 'var(--text-muted)', border: 'var(--border-subtle)' };
+        return `<span class="tag" style="background:${s.bg};color:${s.color};border:1px solid ${s.border}33;">${level}</span>`;
     }
 
-    // --- Show / Hide Helpers ---
-    function showLoading() {
-        document.getElementById('loading-overlay').classList.remove('hidden');
-    }
-
-    function hideLoading() {
-        document.getElementById('loading-overlay').classList.add('hidden');
-    }
-
+    // Show/Hide
+    function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
+    function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
     function showError(msg) {
         hideError();
-        const container = document.getElementById('error-container');
         document.getElementById('error-message').textContent = msg;
-        container.classList.remove('hidden');
-        errorTimeout = setTimeout(() => hideError(), 8000);
+        document.getElementById('error-container').classList.remove('hidden');
+        errorTimeout = setTimeout(hideError, 8000);
     }
-
     function hideError() {
         document.getElementById('error-container').classList.add('hidden');
         if (errorTimeout) { clearTimeout(errorTimeout); errorTimeout = null; }
     }
 
-    // --- Pattern Filter ---
-    let activeFilter = 'all';
-
+    // ============================================================
+    // PATTERN FILTER
+    // ============================================================
     function filterPatterns(type) {
         activeFilter = type;
-        const buttons = {
-            all: document.getElementById('pattern-filter-all'),
-            confirmed: document.getElementById('pattern-filter-confirmed'),
-            predicted: document.getElementById('pattern-filter-predicted'),
-        };
-        Object.entries(buttons).forEach(([key, btn]) => {
-            if (key === type) {
-                btn.className = 'px-3 py-1 rounded-lg text-sm font-medium bg-blue-500 text-white transition-colors';
-            } else {
-                btn.className = 'px-3 py-1 rounded-lg text-sm font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors';
-            }
+        ['all','confirmed','predicted'].forEach(key => {
+            const btn = document.getElementById('pattern-filter-' + key);
+            btn.className = 'filter-btn ' + (key === type ? 'filter-btn-active' : 'filter-btn-inactive');
         });
-
+        let visible = 0;
         document.querySelectorAll('#patterns-grid .pattern-card').forEach(card => {
-            if (type === 'all') {
-                card.classList.remove('hidden');
-            } else {
-                card.classList.toggle('hidden', card.dataset.type !== type);
-            }
+            const show = type === 'all' || card.dataset.type === type;
+            card.classList.toggle('hidden', !show);
+            if (show) visible++;
         });
-
-        // Check if all visible
-        const visibleCards = document.querySelectorAll('#patterns-grid .pattern-card:not(.hidden)');
-        document.getElementById('patterns-empty').classList.toggle('hidden', visibleCards.length > 0);
+        document.getElementById('patterns-empty').classList.toggle('hidden', visible > 0);
     }
 
-    // --- Main Analysis ---
+    // ============================================================
+    // MINI CANDLESTICK RENDERER
+    // ============================================================
+    function drawMiniCandles(canvas, patternName, signal) {
+        // Find shape data
+        let shapes = PATTERN_SHAPES[patternName];
+        if (!shapes) {
+            // Strip prediction suffix and try again
+            const baseName = patternName.replace(/予測$/, '');
+            shapes = PATTERN_SHAPES[baseName];
+        }
+        if (!shapes) {
+            // Fallback: generic candle based on signal
+            const isBullish = signal && signal.includes('強気');
+            shapes = isBullish
+                ? [{o:35,h:80,l:30,c:75}]
+                : [{o:75,h:80,l:20,c:25}];
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        const W = 80, H = 52;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const PAD = 6;
+        const chartW = W - PAD * 2;
+        const chartH = H - PAD * 2;
+        const n = shapes.length;
+        const slotW = chartW / n;
+        const candleW = Math.min(slotW * 0.55, 18);
+
+        const BULL = '#00e5a0';
+        const BEAR = '#ff4d6a';
+
+        shapes.forEach((s, i) => {
+            const cx = PAD + slotW * i + slotW / 2;
+            const isBull = s.c >= s.o;
+            const color = isBull ? BULL : BEAR;
+
+            // Map 0-100 to canvas Y (inverted)
+            const toY = v => PAD + chartH * (1 - v / 100);
+            const bodyTop = toY(Math.max(s.o, s.c));
+            const bodyBot = toY(Math.min(s.o, s.c));
+            const bodyH = Math.max(bodyBot - bodyTop, 1);
+
+            // Wick
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx, toY(s.h));
+            ctx.lineTo(cx, toY(s.l));
+            ctx.stroke();
+
+            // Body
+            ctx.fillStyle = isBull ? color : color;
+            ctx.globalAlpha = isBull ? 0.9 : 0.9;
+            ctx.fillRect(cx - candleW/2, bodyTop, candleW, bodyH);
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cx - candleW/2, bodyTop, candleW, bodyH);
+        });
+    }
+
+    // ============================================================
+    // MAIN ANALYSIS
+    // ============================================================
     async function analyze() {
         const ticker = document.getElementById('ticker').value.trim().toUpperCase();
-        if (!ticker) {
-            showError('ティッカーシンボルを入力してください。');
-            return;
-        }
+        if (!ticker) { showError('ティッカーシンボルを入力してください。'); return; }
 
         currentTicker = ticker;
         hideError();
         showLoading();
 
-        const analyzeBody = { ticker };
+        const body = { ticker };
         const day1 = document.getElementById('day1').value;
         const day2 = document.getElementById('day2').value;
         const day3 = document.getElementById('day3').value;
-        if (day1 !== '') analyzeBody.change1 = parseFloat(day1);
-        if (day2 !== '') analyzeBody.change2 = parseFloat(day2);
-        if (day3 !== '') analyzeBody.change3 = parseFloat(day3);
-
-        // Include candle_count for realdata mode only
-        const isSimulation = (day1 !== '' && day2 !== '');
-        if (!isSimulation) {
-            analyzeBody.candle_count = selectedCandleCount;
-        }
+        if (day1 !== '') body.change1 = parseFloat(day1);
+        if (day2 !== '') body.change2 = parseFloat(day2);
+        if (day3 !== '') body.change3 = parseFloat(day3);
+        if (!(day1 !== '' && day2 !== '')) body.candle_count = selectedCandleCount;
 
         try {
             const [analyzeRes, riskRes] = await Promise.all([
-                fetch('/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(analyzeBody),
-                }),
-                fetch('/risk', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ticker }),
-                }),
+                fetch('/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }),
+                fetch('/risk', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ticker}) }),
             ]);
-
-            if (!analyzeRes.ok) {
-                const err = await analyzeRes.json();
-                throw new Error(err.detail || 'Analysis failed');
-            }
-
+            if (!analyzeRes.ok) { const err = await analyzeRes.json(); throw new Error(err.detail || 'Analysis failed'); }
             const analyzeData = await analyzeRes.json();
-            let riskData = null;
-            if (riskRes.ok) {
-                riskData = await riskRes.json();
-            }
-
+            const riskData = riskRes.ok ? await riskRes.json() : null;
             renderResults(analyzeData, riskData);
-        } catch (e) {
-            showError(e.message);
-        } finally {
-            hideLoading();
-        }
+        } catch (e) { showError(e.message); }
+        finally { hideLoading(); }
     }
 
-    // --- Render Results ---
+    // ============================================================
+    // RENDER RESULTS
+    // ============================================================
     function renderResults(data, riskData) {
         document.getElementById('empty-state').classList.add('hidden');
         document.getElementById('results-section').classList.remove('hidden');
 
-        // Mode bar
         document.getElementById('mode-bar-ticker').textContent = currentTicker;
-        const mode = data.mode || 'real';
-        const modeTextMap = {
-            realdata: 'リアルデータ分析（3本）',
-            realdata_2candle: 'リアルデータ分析（2本）',
-            simulation_confirmed: 'シミュレーション（確定）分析',
-            simulation_predicted: 'シミュレーション（予測）分析',
+        const modeMap = {
+            realdata: 'Realdata Analysis (3-Candle)',
+            realdata_2candle: 'Realdata Analysis (2-Candle)',
+            simulation_confirmed: 'Simulation (Confirmed)',
+            simulation_predicted: 'Simulation (Predicted)',
         };
-        document.getElementById('mode-bar-text').textContent = modeTextMap[mode] || mode;
+        document.getElementById('mode-bar-text').textContent = modeMap[data.mode] || data.mode;
 
-        // Candlestick chart
         renderCandlestickChart(data.candles || []);
-
-        // Candle table
         renderCandleTable(data.candles || []);
-
-        // Short interest
         renderShortInterest(data.short_interest, data.atr);
-
-        // Patterns
         renderPatterns(data.patterns || []);
-
-        // Risk analysis
         renderRisk(riskData);
     }
 
-    // --- Candlestick Chart ---
+    // ============================================================
+    // CANDLESTICK CHART (full-width responsive)
+    // ============================================================
     function renderCandlestickChart(candles) {
-        const chartSection = document.getElementById('chart-section');
+        const section = document.getElementById('chart-section');
         const canvas = document.getElementById('candle-chart');
+        if (!candles || !candles.length) { section.classList.add('hidden'); return; }
+        section.classList.remove('hidden');
 
-        if (!candles || candles.length === 0) {
-            chartSection.classList.add('hidden');
-            return;
-        }
-
-        chartSection.classList.remove('hidden');
-
-        // Set canvas dimensions (use devicePixelRatio for sharp rendering)
+        const container = canvas.parentElement;
         const dpr = window.devicePixelRatio || 1;
-        const displayWidth = 600;
-        const displayHeight = 300;
-        canvas.width = displayWidth * dpr;
-        canvas.height = displayHeight * dpr;
-        canvas.style.width = displayWidth + 'px';
-        canvas.style.height = displayHeight + 'px';
+        const displayW = container.clientWidth;
+        const displayH = Math.min(340, Math.max(240, displayW * 0.25));
+        canvas.width = displayW * dpr;
+        canvas.height = displayH * dpr;
+        canvas.style.width = displayW + 'px';
+        canvas.style.height = displayH + 'px';
 
         const ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
 
-        // Colors
-        const BG_COLOR = '#151b2e';
-        const GRID_COLOR = '#1e2538';
-        const TEXT_COLOR = '#94a3b8';
-        const BULLISH_FILL = '#22c55e';
-        const BULLISH_STROKE = '#16a34a';
-        const BEARISH_FILL = '#ef4444';
-        const BEARISH_STROKE = '#dc2626';
+        const BG = '#0b1120';
+        const GRID = '#151d30';
+        const TXT = '#64748b';
+        const BULL_F = '#00e5a0';
+        const BULL_S = '#00c489';
+        const BEAR_F = '#ff4d6a';
+        const BEAR_S = '#e03d58';
 
-        // Layout
-        const PADDING_TOP = 20;
-        const PADDING_BOTTOM = 40;
-        const PADDING_LEFT = 20;
-        const PADDING_RIGHT = 70;
-        const chartWidth = displayWidth - PADDING_LEFT - PADDING_RIGHT;
-        const chartHeight = displayHeight - PADDING_TOP - PADDING_BOTTOM;
+        const PT = 24, PB = 36, PL = 24, PR = 80;
+        const cW = displayW - PL - PR;
+        const cH = displayH - PT - PB;
 
-        // Calculate price range
-        const allHighs = candles.map(c => c.high);
-        const allLows = candles.map(c => c.low);
-        const maxPrice = Math.max(...allHighs);
-        const minPrice = Math.min(...allLows);
-        const priceRange = maxPrice - minPrice;
-        const padding5pct = priceRange * 0.05 || 0.5;
-        const yMax = maxPrice + padding5pct;
-        const yMin = minPrice - padding5pct;
+        const highs = candles.map(c => c.high);
+        const lows = candles.map(c => c.low);
+        const maxP = Math.max(...highs);
+        const minP = Math.min(...lows);
+        const range = maxP - minP;
+        const pad5 = range * 0.08 || 0.5;
+        const yMax = maxP + pad5;
+        const yMin = minP - pad5;
         const yRange = yMax - yMin;
+        const toY = p => PT + cH * (1 - (p - yMin) / yRange);
 
-        // Helper: price to Y coordinate
-        function priceToY(price) {
-            return PADDING_TOP + chartHeight * (1 - (price - yMin) / yRange);
-        }
+        // Background
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, displayW, displayH);
 
-        // Clear and draw background
-        ctx.fillStyle = BG_COLOR;
-        ctx.fillRect(0, 0, displayWidth, displayHeight);
+        // Grid
+        const LINES = 5;
+        ctx.font = '11px IBM Plex Mono, monospace';
+        for (let i = 0; i <= LINES; i++) {
+            const price = yMin + (yRange * i / LINES);
+            const y = toY(price);
 
-        // Draw horizontal grid lines (4 lines)
-        const GRID_LINES = 4;
-        ctx.strokeStyle = GRID_COLOR;
-        ctx.lineWidth = 1;
-        ctx.font = '11px sans-serif';
-        ctx.fillStyle = TEXT_COLOR;
-        ctx.textAlign = 'left';
-
-        for (let i = 0; i <= GRID_LINES; i++) {
-            const price = yMin + (yRange * i / GRID_LINES);
-            const y = priceToY(price);
+            ctx.strokeStyle = GRID;
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(PADDING_LEFT, y);
-            ctx.lineTo(PADDING_LEFT + chartWidth, y);
+            ctx.setLineDash([4,4]);
+            ctx.moveTo(PL, y);
+            ctx.lineTo(PL + cW, y);
             ctx.stroke();
+            ctx.setLineDash([]);
 
-            // Y-axis price labels on the right
-            ctx.fillStyle = TEXT_COLOR;
+            ctx.fillStyle = TXT;
             ctx.textAlign = 'left';
-            ctx.fillText('$' + price.toFixed(2), PADDING_LEFT + chartWidth + 8, y + 4);
+            ctx.fillText('$' + price.toFixed(2), PL + cW + 10, y + 4);
         }
 
-        // Draw candles
-        const candleCount = candles.length;
-        const slotWidth = chartWidth / candleCount;
-        const candleWidth = Math.min(slotWidth * 0.5, 60);
+        // Candles
+        const n = candles.length;
+        const slotW = cW / n;
+        const candleW = Math.min(slotW * 0.5, 80);
 
         candles.forEach((c, i) => {
-            const centerX = PADDING_LEFT + slotWidth * i + slotWidth / 2;
-            const isBullish = c.close >= c.open;
+            const cx = PL + slotW * i + slotW / 2;
+            const bull = c.close >= c.open;
+            const fill = bull ? BULL_F : BEAR_F;
+            const stroke = bull ? BULL_S : BEAR_S;
 
-            const bodyTop = priceToY(Math.max(c.open, c.close));
-            const bodyBottom = priceToY(Math.min(c.open, c.close));
-            const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
-            const wickTop = priceToY(c.high);
-            const wickBottom = priceToY(c.low);
+            const bTop = toY(Math.max(c.open, c.close));
+            const bBot = toY(Math.min(c.open, c.close));
+            const bH = Math.max(bBot - bTop, 1);
 
-            // Colors
-            const fillColor = isBullish ? BULLISH_FILL : BEARISH_FILL;
-            const strokeColor = isBullish ? BULLISH_STROKE : BEARISH_STROKE;
+            // Glow effect
+            ctx.shadowColor = bull ? '#00e5a044' : '#ff4d6a44';
+            ctx.shadowBlur = 8;
 
-            // Draw wick (high to low)
-            ctx.strokeStyle = strokeColor;
+            // Wick
+            ctx.strokeStyle = stroke;
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(centerX, wickTop);
-            ctx.lineTo(centerX, wickBottom);
+            ctx.moveTo(cx, toY(c.high));
+            ctx.lineTo(cx, toY(c.low));
             ctx.stroke();
 
-            // Draw body
-            ctx.fillStyle = fillColor;
-            ctx.strokeStyle = strokeColor;
+            // Body
+            ctx.fillStyle = fill;
+            ctx.fillRect(cx - candleW/2, bTop, candleW, bH);
+            ctx.strokeStyle = stroke;
             ctx.lineWidth = 1;
-            ctx.fillRect(centerX - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
-            ctx.strokeRect(centerX - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+            ctx.strokeRect(cx - candleW/2, bTop, candleW, bH);
 
-            // X-axis date label
-            ctx.fillStyle = TEXT_COLOR;
+            ctx.shadowBlur = 0;
+
+            // Date label
+            ctx.fillStyle = TXT;
             ctx.textAlign = 'center';
-            ctx.font = '11px sans-serif';
-            const dateLabel = c.date || '';
-            ctx.fillText(dateLabel, centerX, displayHeight - PADDING_BOTTOM + 20);
+            ctx.font = '11px IBM Plex Mono, monospace';
+            ctx.fillText(c.date || '', cx, displayH - PB + 20);
         });
     }
 
-    // --- Candle Table ---
+    // Resize chart on window resize
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const section = document.getElementById('chart-section');
+            if (!section.classList.contains('hidden')) {
+                // Re-render with current data would require stored candles
+                // Simple approach: just resize canvas container
+            }
+        }, 200);
+    });
+
+    // ============================================================
+    // CANDLE TABLE
+    // ============================================================
     function renderCandleTable(candles) {
         const tbody = document.getElementById('candle-tbody');
-        tbody.innerHTML = '';
-
-        candles.forEach(c => {
-            const bullish = c.close >= c.open;
-            const borderClass = bullish ? 'border-l-2 border-green-500' : 'border-l-2 border-red-500';
-            const closeClass = bullish ? 'text-green-400' : 'text-red-400';
-
-            const tr = document.createElement('tr');
-            tr.className = `${borderClass} border-b border-slate-700/50 hover:bg-[#252d42] transition-colors`;
-            tr.innerHTML = `
-                <td class="py-2 px-3 text-slate-300">${c.date || ''}</td>
-                <td class="py-2 px-3 text-right text-slate-300">${formatPrice(c.open)}</td>
-                <td class="py-2 px-3 text-right text-slate-300">${formatPrice(c.high)}</td>
-                <td class="py-2 px-3 text-right text-slate-300">${formatPrice(c.low)}</td>
-                <td class="py-2 px-3 text-right font-medium ${closeClass}">${formatPrice(c.close)}</td>
-                <td class="py-2 px-3 text-right text-slate-400">${formatVolume(c.volume)}</td>
+        tbody.innerHTML = candles.map((c, i) => {
+            const bull = c.close >= c.open;
+            const borderColor = bull ? 'var(--bullish)' : 'var(--bearish)';
+            const closeColor = bull ? 'var(--bullish)' : 'var(--bearish)';
+            return `
+                <tr class="animate-reveal" style="animation-delay:${i*0.05}s; border-bottom: 1px solid var(--border-subtle); border-left: 2px solid ${borderColor}; transition: background 0.2s;"
+                    onmouseenter="this.style.background='var(--bg-card-hover)'" onmouseleave="this.style.background='transparent'">
+                    <td class="py-3 px-4" style="color: var(--text-secondary);">${c.date || ''}</td>
+                    <td class="py-3 px-4 text-right" style="color: var(--text-secondary);">${formatPrice(c.open)}</td>
+                    <td class="py-3 px-4 text-right" style="color: var(--text-secondary);">${formatPrice(c.high)}</td>
+                    <td class="py-3 px-4 text-right" style="color: var(--text-secondary);">${formatPrice(c.low)}</td>
+                    <td class="py-3 px-4 text-right font-semibold" style="color: ${closeColor};">${formatPrice(c.close)}</td>
+                    <td class="py-3 px-4 text-right" style="color: var(--text-muted);">${formatVolume(c.volume)}</td>
+                </tr>
             `;
-            tbody.appendChild(tr);
-        });
+        }).join('');
     }
 
-    // --- Short Interest ---
+    // ============================================================
+    // SHORT INTEREST
+    // ============================================================
     function renderShortInterest(si, atr) {
         const grid = document.getElementById('short-interest-grid');
         const atrSection = document.getElementById('atr-section');
 
         if (!si) {
-            grid.innerHTML = '<p class="col-span-2 text-slate-500 text-center py-4">データなし</p>';
+            grid.innerHTML = `<p class="text-center py-6" style="color: var(--text-muted);">No data</p>`;
             atrSection.innerHTML = '';
             return;
         }
 
-        const shortPct = si.short_percent_of_float;
-        let riskLevel = '低';
-        if (shortPct != null) {
-            if (shortPct >= 20) riskLevel = '高';
-            else if (shortPct >= 10) riskLevel = '中';
-        }
+        const pct = si.short_percent_of_float;
+        let risk = '低';
+        if (pct != null) { if (pct >= 20) risk = '高'; else if (pct >= 10) risk = '中'; }
 
         const metrics = [
-            {
-                label: '浮動株空売り比率',
-                value: shortPct != null ? shortPct.toFixed(1) + '%' : 'N/A',
-                badge: shortPct != null ? riskBadge(riskLevel) : '',
-            },
-            {
-                label: 'Short Ratio',
-                value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A',
-                badge: '',
-            },
-            {
-                label: '空売り株数',
-                value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A',
-                badge: '',
-            },
-            {
-                label: '前月空売り株数',
-                value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A',
-                badge: '',
-            },
+            { label: 'Short % of Float', value: pct != null ? pct.toFixed(1)+'%' : 'N/A', badge: pct != null ? riskBadge(risk) : '' },
+            { label: 'Short Ratio', value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A', badge: '' },
+            { label: 'Shares Short', value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A', badge: '' },
+            { label: 'Prior Month', value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A', badge: '' },
         ];
 
-        grid.innerHTML = metrics.map(m => `
-            <div class="bg-[#151b2e] rounded-lg p-3">
-                <p class="text-xs text-slate-500 mb-1">${m.label}</p>
+        grid.innerHTML = metrics.map((m, i) => `
+            <div class="metric-card animate-reveal" style="animation-delay:${0.1+i*0.05}s;">
+                <p class="text-[10px] font-semibold tracking-wider uppercase mb-2" style="color: var(--text-muted);">${m.label}</p>
                 <div class="flex items-center gap-2">
-                    <p class="text-lg font-bold text-slate-200">${m.value}</p>
+                    <p class="text-lg font-bold font-mono" style="color: var(--text-primary);">${m.value}</p>
                     ${m.badge}
                 </div>
             </div>
         `).join('');
 
-        if (atr != null) {
-            atrSection.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-400">ATR(14)</span>
-                    <span class="text-sm font-medium text-slate-200">${formatPrice(atr)}</span>
-                </div>
-            `;
-        } else {
-            atrSection.innerHTML = '';
-        }
+        atrSection.innerHTML = atr != null ? `
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold tracking-wider uppercase" style="color: var(--text-muted);">ATR(14)</span>
+                <span class="text-sm font-bold font-mono" style="color: var(--text-primary);">${formatPrice(atr)}</span>
+            </div>
+        ` : '';
     }
 
-    // --- Patterns ---
+    // ============================================================
+    // PATTERNS (with mini candlestick visualization)
+    // ============================================================
     function renderPatterns(patterns) {
         const grid = document.getElementById('patterns-grid');
         const empty = document.getElementById('patterns-empty');
+        const countEl = document.getElementById('pattern-count');
+        countEl.textContent = patterns.length;
 
         if (!patterns.length) {
             grid.innerHTML = '';
             empty.classList.remove('hidden');
             return;
         }
-
         empty.classList.add('hidden');
 
-        grid.innerHTML = patterns.map(p => {
-            const typeClass = p.type === 'confirmed'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-purple-500/20 text-purple-400';
-            const typeLabel = p.type === 'confirmed' ? '確定' : '予測';
+        grid.innerHTML = patterns.map((p, i) => {
+            const isBullish = p.signal && p.signal.includes('強気');
+            const isBearish = p.signal && p.signal.includes('弱気');
+            const cardClass = isBullish ? 'pattern-card-bullish' : isBearish ? 'pattern-card-bearish' : '';
+            const signalColor = isBullish ? 'var(--bullish)' : isBearish ? 'var(--bearish)' : 'var(--text-secondary)';
+            const tagClass = p.type === 'confirmed' ? 'tag-confirmed' : 'tag-predicted';
+            const tagLabel = p.type === 'confirmed' ? 'CONFIRMED' : 'PREDICTED';
 
-            let signalClass = 'text-slate-300';
-            if (p.signal && p.signal.includes('強気')) signalClass = 'text-green-400';
-            if (p.signal && p.signal.includes('弱気')) signalClass = 'text-red-400';
-
-            let requiredThirdHtml = '';
+            let requiredHtml = '';
             if (p.type === 'predicted' && p.required_third != null) {
-                requiredThirdHtml = `
-                    <div class="mt-3 bg-purple-500/10 border border-purple-500/20 rounded p-2">
-                        <p class="text-xs text-purple-400">必要な3日目の変化率: <span class="font-bold">${p.required_third}</span></p>
+                requiredHtml = `
+                    <div class="mt-3 rounded-lg p-2.5" style="background: var(--predicted-dim); border: 1px solid #a78bfa22;">
+                        <p class="text-[11px] font-mono" style="color: var(--predicted);">
+                            Required 3rd: <span class="font-bold">${p.required_third}</span>
+                        </p>
                     </div>
                 `;
             }
 
             return `
-                <div class="pattern-card bg-[#151b2e] rounded-lg p-4 hover:bg-[#252d42] transition-colors" data-type="${p.type}">
-                    <div class="flex items-start justify-between mb-2">
-                        <h3 class="font-bold text-slate-200">${p.name || ''}</h3>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${typeClass}">${typeLabel}</span>
+                <div class="pattern-card card ${cardClass} p-4 animate-reveal" data-type="${p.type}" style="animation-delay:${0.15+i*0.04}s;">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <h3 class="font-bold text-sm truncate" style="color: var(--text-primary);">${p.name || ''}</h3>
+                                <span class="tag ${tagClass} flex-shrink-0">${tagLabel}</span>
+                            </div>
+                            <p class="text-xs font-semibold mb-1" style="color: ${signalColor};">${p.signal || ''}</p>
+                            <p class="text-[11px] leading-relaxed" style="color: var(--text-muted);">${p.description || ''}</p>
+                            ${requiredHtml}
+                        </div>
+                        <canvas class="mini-candle flex-shrink-0 rounded" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"
+                                data-pattern="${p.name || ''}" data-signal="${p.signal || ''}"></canvas>
                     </div>
-                    <p class="text-sm ${signalClass} mb-1">${p.signal || ''}</p>
-                    <p class="text-xs text-slate-500">${p.description || ''}</p>
-                    ${requiredThirdHtml}
                 </div>
             `;
         }).join('');
 
-        // Reset filter
+        // Draw mini candles on each canvas
+        document.querySelectorAll('.mini-candle').forEach(canvas => {
+            drawMiniCandles(canvas, canvas.dataset.pattern, canvas.dataset.signal);
+        });
+
         filterPatterns(activeFilter);
     }
 
-    // --- Risk Analysis ---
+    // ============================================================
+    // RISK ANALYSIS
+    // ============================================================
     function renderRisk(riskData) {
         const section = document.getElementById('risk-section');
-
         if (!riskData || (!riskData.financial_health && !riskData.offering_risk)) {
             section.innerHTML = '';
             return;
         }
 
-        function formatMetricValue(metric) {
-            if (metric.value == null) return 'N/A';
-            const v = metric.value;
-            if (metric.name.includes('レシオ') || metric.name.includes('比率') || metric.name.includes('流動')) {
-                return v.toFixed(2) + 'x';
+        function fmtMetric(m) {
+            if (m.value == null) return 'N/A';
+            const v = m.value;
+            if (m.name.includes('レシオ') || m.name.includes('比率') || m.name.includes('流動')) return v.toFixed(2)+'x';
+            if (m.name.includes('利益率')) return (v*100).toFixed(1)+'%';
+            if (m.name.includes('ランウェイ')) {
+                if (m.description && m.description.includes('黒字')) return 'Profitable';
+                return v.toFixed(0)+' months';
             }
-            if (metric.name.includes('利益率')) {
-                return (v * 100).toFixed(1) + '%';
-            }
-            if (metric.name.includes('ランウェイ')) {
-                if (riskData.financial_health && metric.description && metric.description.includes('黒字')) return '黒字';
-                return v.toFixed(0) + 'ヶ月';
-            }
-            if (Math.abs(v) >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
-            if (Math.abs(v) >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+            if (Math.abs(v) >= 1e9) return '$'+(v/1e9).toFixed(1)+'B';
+            if (Math.abs(v) >= 1e6) return '$'+(v/1e6).toFixed(1)+'M';
             return v.toFixed(2);
         }
 
-        function renderCategory(title, cat) {
+        function renderCat(title, icon, cat) {
             if (!cat) return '';
-            const metricKeys = Object.keys(cat).filter(k => k !== 'overall_level' && k !== 'summary');
-            const metricsHtml = metricKeys.map(key => {
-                const m = cat[key];
+            const keys = Object.keys(cat).filter(k => k !== 'overall_level' && k !== 'summary');
+            const rows = keys.map(k => {
+                const m = cat[k];
                 if (!m || !m.name) return '';
                 return `
-                    <div class="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
-                        <span class="text-sm text-slate-400">${m.name}</span>
+                    <div class="flex items-center justify-between py-2.5" style="border-bottom: 1px solid var(--border-subtle);">
+                        <span class="text-xs" style="color: var(--text-secondary);">${m.name}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium text-slate-200">${formatMetricValue(m)}</span>
+                            <span class="text-xs font-bold font-mono" style="color: var(--text-primary);">${fmtMetric(m)}</span>
                             ${riskBadge(m.level)}
                         </div>
                     </div>
                 `;
             }).join('');
 
-            const summaryHtml = cat.summary
-                ? `<div class="mt-4 bg-slate-800/50 rounded p-3"><p class="text-sm text-slate-400">${cat.summary}</p></div>`
+            const summary = cat.summary
+                ? `<div class="mt-4 rounded-lg p-3" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"><p class="text-xs leading-relaxed" style="color: var(--text-secondary);">${cat.summary}</p></div>`
                 : '';
 
             return `
-                <div class="bg-[#1e2538] rounded-xl p-5">
+                <div class="card p-5 animate-reveal" style="animation-delay: 0.2s;">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold text-slate-200">${title}</h2>
+                        <div class="flex items-center gap-3">
+                            <div class="w-1 h-5 rounded-full" style="background: ${icon};"></div>
+                            <h2 class="text-base font-bold tracking-wide">${title}</h2>
+                        </div>
                         ${riskBadge(cat.overall_level)}
                     </div>
-                    <div>${metricsHtml}</div>
-                    ${summaryHtml}
+                    <div>${rows}</div>
+                    ${summary}
                 </div>
             `;
         }
 
         section.innerHTML =
-            renderCategory('財務健全性', riskData.financial_health) +
-            renderCategory('オファリングリスク', riskData.offering_risk);
+            renderCat('Financial Health', 'var(--bullish)', riskData.financial_health) +
+            renderCat('Offering Risk', 'var(--bearish)', riskData.offering_risk);
     }
 
-    // --- Save Image ---
+    // ============================================================
+    // SAVE IMAGE
+    // ============================================================
     async function saveImage() {
         const btn = document.getElementById('save-btn');
-        btn.textContent = '保存中...';
-        btn.disabled = true;
+        btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Saving...</span>';
+        btn.style.pointerEvents = 'none';
         try {
             const canvas = await html2canvas(document.getElementById('results-section'), {
-                backgroundColor: '#0a0e1a',
+                backgroundColor: '#060a12',
                 scale: 2,
             });
             const link = document.createElement('a');
-            const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
             link.download = `${currentTicker}_analysis_${date}.jpg`;
             link.href = canvas.toDataURL('image/jpeg', 0.95);
             link.click();
-        } catch (e) {
-            showError('画像の保存に失敗しました: ' + e.message);
-        } finally {
-            btn.textContent = '画像として保存';
-            btn.disabled = false;
+        } catch (e) { showError('Failed to save: ' + e.message); }
+        finally {
+            btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Save as Image</span>';
+            btn.style.pointerEvents = 'auto';
         }
     }
 </script>
