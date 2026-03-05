@@ -62,6 +62,24 @@
                             class="w-full bg-[#151b2e] border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                 </div>
+                <!-- Candle Count Selector (realdata mode only) -->
+                <div id="candle-count-selector" class="mb-4">
+                    <label class="text-sm text-gray-400 mb-2 block">分析モード</label>
+                    <div class="flex gap-2">
+                        <button id="btn-2candle" type="button"
+                                class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">
+                            2本分析
+                        </button>
+                        <button id="btn-3candle" type="button"
+                                class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                            3本分析
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <span id="mode-desc">3本: 確定パターン（1+2+3本足）を検出</span>
+                    </p>
+                </div>
+
                 <!-- Mode Badge + Button -->
                 <div class="flex items-center justify-between flex-wrap gap-3">
                     <span id="mode-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
@@ -109,6 +127,12 @@
                 <span id="mode-bar-ticker" class="text-xl font-bold text-slate-100"></span>
                 <span class="text-slate-500">-</span>
                 <span id="mode-bar-text" class="text-slate-400"></span>
+            </div>
+
+            <!-- Candlestick Chart -->
+            <div id="chart-section" class="hidden mb-6">
+                <h3 class="text-lg font-semibold text-white mb-3">ローソク足チャート</h3>
+                <canvas id="candle-chart" class="rounded-lg" style="max-width: 600px; height: 300px;"></canvas>
             </div>
 
             <!-- Candle Table + Short Interest -->
@@ -176,6 +200,7 @@
     // --- State ---
     let currentTicker = '';
     let errorTimeout = null;
+    let selectedCandleCount = 3;
 
     // --- Mode Badge Update ---
     function updateModeBadge() {
@@ -199,6 +224,41 @@
     document.getElementById('day1').addEventListener('input', updateModeBadge);
     document.getElementById('day2').addEventListener('input', updateModeBadge);
     document.getElementById('day3').addEventListener('input', updateModeBadge);
+
+    // --- Candle Count Selector ---
+    function updateCandleCountSelector() {
+        const d1 = document.getElementById('day1').value.trim();
+        const d2 = document.getElementById('day2').value.trim();
+        const selector = document.getElementById('candle-count-selector');
+        if (d1 !== '' && d2 !== '') {
+            selector.classList.add('hidden');
+        } else {
+            selector.classList.remove('hidden');
+        }
+    }
+
+    function selectCandleCount(count) {
+        selectedCandleCount = count;
+        const btn2 = document.getElementById('btn-2candle');
+        const btn3 = document.getElementById('btn-3candle');
+        const desc = document.getElementById('mode-desc');
+
+        if (count === 2) {
+            btn2.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors';
+            btn3.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors';
+            desc.textContent = '2本: 確定パターン（1+2本足）+ 予測パターンを検出';
+        } else {
+            btn3.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors';
+            btn2.className = 'px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors';
+            desc.textContent = '3本: 確定パターン（1+2+3本足）を検出';
+        }
+    }
+
+    document.getElementById('btn-2candle').addEventListener('click', () => selectCandleCount(2));
+    document.getElementById('btn-3candle').addEventListener('click', () => selectCandleCount(3));
+    document.getElementById('day1').addEventListener('input', updateCandleCountSelector);
+    document.getElementById('day2').addEventListener('input', updateCandleCountSelector);
+    document.getElementById('day3').addEventListener('input', updateCandleCountSelector);
 
     // Enter key triggers analysis
     document.querySelectorAll('#ticker, #day1, #day2, #day3').forEach(el => {
@@ -316,6 +376,12 @@
         if (day2 !== '') analyzeBody.change2 = parseFloat(day2);
         if (day3 !== '') analyzeBody.change3 = parseFloat(day3);
 
+        // Include candle_count for realdata mode only
+        const isSimulation = (day1 !== '' && day2 !== '');
+        if (!isSimulation) {
+            analyzeBody.candle_count = selectedCandleCount;
+        }
+
         try {
             const [analyzeRes, riskRes] = await Promise.all([
                 fetch('/analyze', {
@@ -358,11 +424,15 @@
         document.getElementById('mode-bar-ticker').textContent = currentTicker;
         const mode = data.mode || 'real';
         const modeTextMap = {
-            realdata: 'リアルデータ分析',
+            realdata: 'リアルデータ分析（3本）',
+            realdata_2candle: 'リアルデータ分析（2本）',
             simulation_confirmed: 'シミュレーション（確定）分析',
             simulation_predicted: 'シミュレーション（予測）分析',
         };
         document.getElementById('mode-bar-text').textContent = modeTextMap[mode] || mode;
+
+        // Candlestick chart
+        renderCandlestickChart(data.candles || []);
 
         // Candle table
         renderCandleTable(data.candles || []);
@@ -375,6 +445,132 @@
 
         // Risk analysis
         renderRisk(riskData);
+    }
+
+    // --- Candlestick Chart ---
+    function renderCandlestickChart(candles) {
+        const chartSection = document.getElementById('chart-section');
+        const canvas = document.getElementById('candle-chart');
+
+        if (!candles || candles.length === 0) {
+            chartSection.classList.add('hidden');
+            return;
+        }
+
+        chartSection.classList.remove('hidden');
+
+        // Set canvas dimensions (use devicePixelRatio for sharp rendering)
+        const dpr = window.devicePixelRatio || 1;
+        const displayWidth = 600;
+        const displayHeight = 300;
+        canvas.width = displayWidth * dpr;
+        canvas.height = displayHeight * dpr;
+        canvas.style.width = displayWidth + 'px';
+        canvas.style.height = displayHeight + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        // Colors
+        const BG_COLOR = '#151b2e';
+        const GRID_COLOR = '#1e2538';
+        const TEXT_COLOR = '#94a3b8';
+        const BULLISH_FILL = '#22c55e';
+        const BULLISH_STROKE = '#16a34a';
+        const BEARISH_FILL = '#ef4444';
+        const BEARISH_STROKE = '#dc2626';
+
+        // Layout
+        const PADDING_TOP = 20;
+        const PADDING_BOTTOM = 40;
+        const PADDING_LEFT = 20;
+        const PADDING_RIGHT = 70;
+        const chartWidth = displayWidth - PADDING_LEFT - PADDING_RIGHT;
+        const chartHeight = displayHeight - PADDING_TOP - PADDING_BOTTOM;
+
+        // Calculate price range
+        const allHighs = candles.map(c => c.high);
+        const allLows = candles.map(c => c.low);
+        const maxPrice = Math.max(...allHighs);
+        const minPrice = Math.min(...allLows);
+        const priceRange = maxPrice - minPrice;
+        const padding5pct = priceRange * 0.05 || 0.5;
+        const yMax = maxPrice + padding5pct;
+        const yMin = minPrice - padding5pct;
+        const yRange = yMax - yMin;
+
+        // Helper: price to Y coordinate
+        function priceToY(price) {
+            return PADDING_TOP + chartHeight * (1 - (price - yMin) / yRange);
+        }
+
+        // Clear and draw background
+        ctx.fillStyle = BG_COLOR;
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
+
+        // Draw horizontal grid lines (4 lines)
+        const GRID_LINES = 4;
+        ctx.strokeStyle = GRID_COLOR;
+        ctx.lineWidth = 1;
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = TEXT_COLOR;
+        ctx.textAlign = 'left';
+
+        for (let i = 0; i <= GRID_LINES; i++) {
+            const price = yMin + (yRange * i / GRID_LINES);
+            const y = priceToY(price);
+            ctx.beginPath();
+            ctx.moveTo(PADDING_LEFT, y);
+            ctx.lineTo(PADDING_LEFT + chartWidth, y);
+            ctx.stroke();
+
+            // Y-axis price labels on the right
+            ctx.fillStyle = TEXT_COLOR;
+            ctx.textAlign = 'left';
+            ctx.fillText('$' + price.toFixed(2), PADDING_LEFT + chartWidth + 8, y + 4);
+        }
+
+        // Draw candles
+        const candleCount = candles.length;
+        const slotWidth = chartWidth / candleCount;
+        const candleWidth = Math.min(slotWidth * 0.5, 60);
+
+        candles.forEach((c, i) => {
+            const centerX = PADDING_LEFT + slotWidth * i + slotWidth / 2;
+            const isBullish = c.close >= c.open;
+
+            const bodyTop = priceToY(Math.max(c.open, c.close));
+            const bodyBottom = priceToY(Math.min(c.open, c.close));
+            const bodyHeight = Math.max(bodyBottom - bodyTop, 1);
+            const wickTop = priceToY(c.high);
+            const wickBottom = priceToY(c.low);
+
+            // Colors
+            const fillColor = isBullish ? BULLISH_FILL : BEARISH_FILL;
+            const strokeColor = isBullish ? BULLISH_STROKE : BEARISH_STROKE;
+
+            // Draw wick (high to low)
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(centerX, wickTop);
+            ctx.lineTo(centerX, wickBottom);
+            ctx.stroke();
+
+            // Draw body
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1;
+            ctx.fillRect(centerX - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+            ctx.strokeRect(centerX - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
+
+            // X-axis date label
+            ctx.fillStyle = TEXT_COLOR;
+            ctx.textAlign = 'center';
+            ctx.font = '11px sans-serif';
+            const dateLabel = c.date || '';
+            ctx.fillText(dateLabel, centerX, displayHeight - PADDING_BOTTOM + 20);
+        });
     }
 
     // --- Candle Table ---
