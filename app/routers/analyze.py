@@ -33,12 +33,14 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     stock_data.validate_ticker(request.ticker)
 
     if mode == "realdata":
-        candles, atr = stock_data.get_ohlcv(request.ticker)
+        count = request.candle_count or 3
+        candles, atr = stock_data.get_ohlcv(request.ticker, candle_count=count)
         short_interest = stock_data.get_short_interest(request.ticker)
-        patterns = pattern_detector.detect_patterns(candles, mode="realdata")
+        detect_mode = "realdata_2candle" if count == 2 else "realdata"
+        patterns = pattern_detector.detect_patterns(candles, mode=detect_mode)
         return AnalyzeResponse(
             ticker=request.ticker,
-            mode="realdata",
+            mode=detect_mode,
             atr=atr,
             candles=candles,
             patterns=patterns,
