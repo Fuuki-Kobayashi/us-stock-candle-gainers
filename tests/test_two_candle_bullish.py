@@ -24,6 +24,7 @@ def test_bullish_engulfing_detected():
     assert match.signal == "🔼 強気シグナル"
     assert match.direction == "bullish"
     assert match.pattern_candle_count == 2
+    assert match.pattern_id == "bullish_engulfing"
 
 
 def test_bullish_engulfing_not_detected_partial():
@@ -51,6 +52,8 @@ def test_bullish_harami_detected():
     # body_bottom=103 > 100, body_top=104 < 110
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "はらみ線" for r in results)
+    match = next(r for r in results if r.name == "はらみ線")
+    assert match.pattern_id == "bullish_harami"
 
 
 def test_bullish_harami_not_detected_outside():
@@ -74,6 +77,8 @@ def test_harami_cross_detected():
     # c1: body_ratio=0.2/4=0.05 (doji), body within 100-110
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "はらみ寄せ線" for r in results)
+    match = next(r for r in results if r.name == "はらみ寄せ線")
+    assert match.pattern_id == "harami_cross"
 
 
 def test_harami_cross_not_detected_not_doji():
@@ -96,6 +101,8 @@ def test_piercing_line_detected():
     # c1 bullish, open=99 < c0.low=100, close=107 > midpoint=105.5
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "切り込み線" for r in results)
+    match = next(r for r in results if r.name == "切り込み線")
+    assert match.pattern_id == "piercing_line"
 
 
 def test_piercing_line_not_detected_below_midpoint():
@@ -118,6 +125,8 @@ def test_tweezers_bottom_detected():
     # both have low=100.0, c0 bearish, c1 bullish
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "毛抜き底" for r in results)
+    match = next(r for r in results if r.name == "毛抜き底")
+    assert match.pattern_id == "tweezers_bottom"
 
 
 def test_tweezers_bottom_not_detected_diff_low():
@@ -140,6 +149,8 @@ def test_meeting_lines_bullish_detected():
     # c1 large bullish (body_ratio=10/13~0.77), close=100=c0.close
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "出会い線（逆襲線）" for r in results)
+    match = next(r for r in results if r.name == "出会い線（逆襲線）")
+    assert match.pattern_id == "bullish_meeting_line"
 
 
 def test_meeting_lines_bullish_not_detected_diff_close():
@@ -161,6 +172,8 @@ def test_matching_low_detected():
     # both bearish, same close=100
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "並び底（ズバリ線）" for r in results)
+    match = next(r for r in results if r.name == "並び底（ズバリ線）")
+    assert match.pattern_id == "matching_low"
 
 
 def test_matching_low_not_detected_diff_close():
@@ -184,6 +197,8 @@ def test_homing_pigeon_detected():
     # both bearish
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "鳩の帰巣" for r in results)
+    match = next(r for r in results if r.name == "鳩の帰巣")
+    assert match.pattern_id == "homing_pigeon"
 
 
 def test_homing_pigeon_not_detected_outside():
@@ -207,6 +222,8 @@ def test_last_engulfing_bottom_detected():
     # engulfs c0 body: 98 < 100 and 102 > 101
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "最後の抱き線" for r in results)
+    match = next(r for r in results if r.name == "最後の抱き線")
+    assert match.pattern_id == "bullish_last_engulfing"
 
 
 def test_last_engulfing_bottom_not_detected_not_engulfing():
@@ -229,6 +246,8 @@ def test_tasuki_bottom_detected():
     # c1 bullish, open=98 < c0.close=100 (gap down then reversal up)
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "タスキ底" for r in results)
+    match = next(r for r in results if r.name == "タスキ底")
+    assert match.pattern_id == "tasuki_bottom"
 
 
 def test_tasuki_bottom_not_detected_no_gap():
@@ -258,6 +277,8 @@ def test_double_pin_bar_detected():
     # body=0.8, lower_shadow=10 (ratio=12.5 >= 2.0), upper=0.2 < 0.8*0.5=0.4 YES
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "ダブル・ピンバー" for r in results)
+    match = next(r for r in results if r.name == "ダブル・ピンバー")
+    assert match.pattern_id == "double_pin_bar"
 
 
 def test_double_pin_bar_not_detected_one_pin():
@@ -281,6 +302,8 @@ def test_kicking_bullish_detected():
     # c1: marubozu bullish (body_ratio=10/10.2~0.98), gap up (c1.low=110.9 > c0.high=110.1)
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "行き違い線（キッキング）" for r in results)
+    match = next(r for r in results if r.name == "行き違い線（キッキング）")
+    assert match.pattern_id == "bullish_kicking"
 
 
 def test_kicking_bullish_not_detected_with_shadow():
@@ -303,6 +326,8 @@ def test_separating_lines_bullish_detected():
     # same open=105, c0 bearish, c1 bullish
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "振り分け線" for r in results)
+    match = next(r for r in results if r.name == "振り分け線")
+    assert match.pattern_id == "bullish_separating_line"
 
 
 def test_separating_lines_bullish_not_detected_diff_open():
@@ -326,6 +351,8 @@ def test_yang_yang_harami_detected():
     # body: top=104, bottom=103 -> inside c0 (103>100, 104<110)
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "陽の陽はらみ" for r in results)
+    match = next(r for r in results if r.name == "陽の陽はらみ")
+    assert match.pattern_id == "bullish_harami_bullish"
 
 
 def test_yang_yang_harami_not_detected_outside():
@@ -348,6 +375,8 @@ def test_breakaway_gap_bullish_detected():
     # c1 large bullish (body_ratio=10/12.5=0.8), gap up (c1.low=105.5 > c0.high=105.0)
     results = detect_2_candle_bullish(c0, c1)
     assert any(r.name == "ブレイクアウェイ・ギャップ" for r in results)
+    match = next(r for r in results if r.name == "ブレイクアウェイ・ギャップ")
+    assert match.pattern_id == "breakaway_gap"
 
 
 def test_breakaway_gap_bullish_not_detected_no_gap():

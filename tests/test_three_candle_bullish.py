@@ -28,6 +28,7 @@ def test_morning_star_detected():
     assert match.signal == "🔼 強気シグナル"
     assert match.direction == "bullish"
     assert match.pattern_candle_count == 3
+    assert match.pattern_id == "morning_star"
 
 
 def test_morning_star_not_detected_c2_not_large():
@@ -52,6 +53,8 @@ def test_morning_doji_star_detected():
     # c2: close=109 > midpoint(c0)=105
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "明けの十字星" for r in results)
+    match = next(r for r in results if r.name == "明けの十字星")
+    assert match.pattern_id == "morning_doji_star"
 
 
 def test_morning_doji_star_not_detected_c1_not_doji():
@@ -77,6 +80,8 @@ def test_abandoned_baby_bottom_detected():
     # c2 large bullish, gap up from c1 (c2.low=99.5 > c1.high=99)
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "捨て子底" for r in results)
+    match = next(r for r in results if r.name == "捨て子底")
+    assert match.pattern_id == "abandoned_baby_bottom"
 
 
 def test_abandoned_baby_bottom_not_detected_no_gap():
@@ -102,6 +107,8 @@ def test_three_white_soldiers_detected():
     # c2 bullish, open=115 in c1 body [105,120], close=130 > c1.close=120
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "赤三兵" for r in results)
+    match = next(r for r in results if r.name == "赤三兵")
+    assert match.pattern_id == "three_red_soldiers"
 
 
 def test_three_white_soldiers_not_detected_descending():
@@ -126,7 +133,9 @@ def test_three_inside_up_detected():
     c2 = make_candle(open=106.0, high=115.0, low=105.0, close=113.0)
     # c2 bullish, close=113 > c0.open=110
     results = detect_3_candle_bullish(c0, c1, c2)
-    assert any(r.name == "スリー・インサイド・アップ" for r in results)
+    assert any("スリー・インサイド・アップ" in r.name for r in results)
+    match = next(r for r in results if "スリー・インサイド・アップ" in r.name)
+    assert match.pattern_id == "three_inside_up"
 
 
 def test_three_inside_up_not_detected_no_breakout():
@@ -136,7 +145,7 @@ def test_three_inside_up_not_detected_no_breakout():
     c2 = make_candle(open=104.0, high=108.0, low=103.0, close=107.0)
     # c2.close=107 < c0.open=110 -> no breakout
     results = detect_3_candle_bullish(c0, c1, c2)
-    assert not any(r.name == "スリー・インサイド・アップ" for r in results)
+    assert not any("スリー・インサイド・アップ" in r.name for r in results)
 
 
 # --- 6. Three Outside Up (#21) ---
@@ -152,6 +161,8 @@ def test_three_outside_up_detected():
     # c2 bullish, close=115 > c1.close=110
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "スリー・アウトサイド・アップ" for r in results)
+    match = next(r for r in results if r.name == "スリー・アウトサイド・アップ")
+    assert match.pattern_id == "three_outside_up"
 
 
 def test_three_outside_up_not_detected_no_continuation():
@@ -178,6 +189,8 @@ def test_morning_pin_bar_reversal_detected():
     # c2: open=99, close=109, large bullish
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "モーニング・ピンバー・リバーサル" for r in results)
+    match = next(r for r in results if r.name == "モーニング・ピンバー・リバーサル")
+    assert match.pattern_id == "morning_pin_bar"
 
 
 def test_morning_pin_bar_reversal_not_detected_no_pin():
@@ -203,6 +216,8 @@ def test_three_stars_bottom_detected():
     # c2: small body
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "三つの星底" for r in results)
+    match = next(r for r in results if r.name == "三つの星底")
+    assert match.pattern_id == "three_stars_bottom"
 
 
 def test_three_stars_bottom_not_detected_large_body():
@@ -227,6 +242,8 @@ def test_stick_sandwich_bullish_detected():
     # c2 bearish, close=100 ~= c0.close=100
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "スティック・サンドイッチ" for r in results)
+    match = next(r for r in results if r.name == "スティック・サンドイッチ")
+    assert match.pattern_id == "stick_sandwich"
 
 
 def test_stick_sandwich_bullish_not_detected_diff_close():
@@ -253,6 +270,8 @@ def test_three_stars_in_south_detected():
     # ranges: 16 > 11 > 7 -> decreasing
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "南の三つ星" for r in results)
+    match = next(r for r in results if r.name == "南の三つ星")
+    assert match.pattern_id == "three_stars_south"
 
 
 def test_three_stars_in_south_not_detected_expanding():
@@ -280,6 +299,8 @@ def test_unique_three_river_bottom_detected():
     # c2: bullish, close=103 > c1.low=101
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "ユニーク・スリー・リバー" for r in results)
+    match = next(r for r in results if r.name == "ユニーク・スリー・リバー")
+    assert match.pattern_id == "unique_three_river"
 
 
 def test_unique_three_river_bottom_not_detected_no_harami():
@@ -306,6 +327,8 @@ def test_downside_gap_three_methods_detected():
     # c2 bullish, close=104 >= c0.close=102 -> fills gap
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "下放れ三法" for r in results)
+    match = next(r for r in results if r.name == "下放れ三法")
+    assert match.pattern_id == "downside_gap_three_methods"
 
 
 def test_downside_gap_three_methods_not_detected_no_fill():
@@ -332,6 +355,8 @@ def test_upside_tasuki_gap_detected():
     # c2 bearish, close=113 > c0.high=110 -> gap not filled
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "上放れタスキ線" for r in results)
+    match = next(r for r in results if r.name == "上放れタスキ線")
+    assert match.pattern_id == "upside_tasuki_gap"
 
 
 def test_upside_tasuki_gap_not_detected_gap_filled():
@@ -357,6 +382,8 @@ def test_upside_gap_side_by_side_white_detected():
     # c2 bullish
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "上放れ並び赤" for r in results)
+    match = next(r for r in results if r.name == "上放れ並び赤")
+    assert match.pattern_id == "upside_gap_two_crows"
 
 
 def test_upside_gap_side_by_side_white_not_detected_no_gap():
@@ -382,6 +409,8 @@ def test_inside_bar_bullish_breakout_detected():
     # c2 bullish, close=118 > c0.high=115 -> breaks above
     results = detect_3_candle_bullish(c0, c1, c2)
     assert any(r.name == "インサイドバーの上抜け" for r in results)
+    match = next(r for r in results if r.name == "インサイドバーの上抜け")
+    assert match.pattern_id == "inside_bar_breakout"
 
 
 def test_inside_bar_bullish_breakout_not_detected_no_break():

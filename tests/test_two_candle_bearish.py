@@ -23,6 +23,7 @@ def test_bearish_engulfing_detected():
     assert match.signal == "🔽 弱気シグナル"
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 2
+    assert match.pattern_id == "bearish_engulfing"
 
 
 def test_bearish_engulfing_not_detected_partial():
@@ -49,6 +50,8 @@ def test_bearish_harami_detected():
     # body: top=106, bottom=105 -> inside c0 body [100, 110]
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "陰の陽はらみ" for r in results)
+    match = next(r for r in results if r.name == "陰の陽はらみ")
+    assert match.pattern_id == "bearish_harami"
 
 
 def test_bearish_harami_not_detected_outside():
@@ -72,6 +75,8 @@ def test_dark_cloud_cover_detected():
     # c1 bearish, open=111 > c0.high=110, close=103 < midpoint=104.5
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "かぶせ線" for r in results)
+    match = next(r for r in results if r.name == "かぶせ線")
+    assert match.pattern_id == "dark_cloud_cover"
 
 
 def test_dark_cloud_cover_not_detected_above_midpoint():
@@ -94,6 +99,8 @@ def test_tweezers_top_detected():
     # both have high=110, c0 bullish, c1 bearish
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "毛抜き天井" for r in results)
+    match = next(r for r in results if r.name == "毛抜き天井")
+    assert match.pattern_id == "tweezers_top"
 
 
 def test_tweezers_top_not_detected_diff_high():
@@ -116,6 +123,8 @@ def test_meeting_lines_bearish_detected():
     # c1 large bearish (body_ratio=10/14~0.71), close=100=c0.close
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "出会い線（弱気）" for r in results)
+    match = next(r for r in results if r.name == "出会い線（弱気）")
+    assert match.pattern_id == "bearish_meeting_line"
 
 
 def test_meeting_lines_bearish_not_detected_diff_close():
@@ -138,6 +147,8 @@ def test_last_engulfing_top_detected():
     # c1 bullish, body: top=107, bottom=99 -> engulfs c0 body (99 < 100, 107 > 101)
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "最後の抱き線（弱気）" for r in results)
+    match = next(r for r in results if r.name == "最後の抱き線（弱気）")
+    assert match.pattern_id == "bearish_last_engulfing"
 
 
 def test_last_engulfing_top_not_detected_not_engulfing():
@@ -160,6 +171,8 @@ def test_thrusting_line_detected():
     # c1 bullish, open=99 < c0.low=100, close=103 < midpoint=105.5
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "差し込み線" for r in results)
+    match = next(r for r in results if r.name == "差し込み線")
+    assert match.pattern_id == "thrusting_line"
 
 
 def test_thrusting_line_not_detected_above_half():
@@ -183,6 +196,8 @@ def test_on_neck_line_detected():
     # c1 bullish, open=97 < c0.low=98, close=100 ~= c0.close=100
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "あて首線" for r in results)
+    match = next(r for r in results if r.name == "あて首線")
+    assert match.pattern_id == "on_neck_line"
 
 
 def test_on_neck_line_not_detected_too_far():
@@ -205,6 +220,8 @@ def test_in_neck_line_detected():
     # c1 bullish, open=97 < c0.low=98, close=101.5 > c0.close=100, close < midpoint=105
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "入り首線" for r in results)
+    match = next(r for r in results if r.name == "入り首線")
+    assert match.pattern_id == "in_neck_line"
 
 
 def test_in_neck_line_not_detected_too_deep():
@@ -228,6 +245,8 @@ def test_kicking_bearish_detected():
     # c1: marubozu bearish (body_ratio=10/10.2~0.98), gap down (c1.high=99.1 < c0.low=99.9)
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "行き違い線（弱気）" for r in results)
+    match = next(r for r in results if r.name == "行き違い線（弱気）")
+    assert match.pattern_id == "bearish_kicking"
 
 
 def test_kicking_bearish_not_detected_with_shadow():
@@ -249,6 +268,8 @@ def test_separating_lines_bearish_detected():
     # same open=105, c0 bullish, c1 bearish
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "振り分線" for r in results)
+    match = next(r for r in results if r.name == "振り分線")
+    assert match.pattern_id == "bearish_separating_line"
 
 
 def test_separating_lines_bearish_not_detected_diff_open():
@@ -270,6 +291,8 @@ def test_downside_gap_breakout_detected():
     # c1 large bearish (body_ratio=10/13~0.77), gap down (c1.high=97 < c0.low=98)
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "下降の窓開け突破" for r in results)
+    match = next(r for r in results if r.name == "下降の窓開け突破")
+    assert match.pattern_id == "bearish_breakaway_gap"
 
 
 def test_downside_gap_breakout_not_detected_no_gap():
@@ -292,6 +315,8 @@ def test_downside_gap_side_by_side_black_detected():
     # c1 bearish, c1.open=95 ~= c0.close=95 -> continuation
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "下放れ並び黒" for r in results)
+    match = next(r for r in results if r.name == "下放れ並び黒")
+    assert match.pattern_id == "falling_twin_black"
 
 
 def test_downside_gap_side_by_side_black_not_detected_no_continuation():
@@ -314,6 +339,8 @@ def test_downside_tasuki_gap_detected():
     # c1 bullish, close=100 < c0.open=105 (doesn't recover to c0's open)
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "下放れタスキ線" for r in results)
+    match = next(r for r in results if r.name == "下放れタスキ線")
+    assert match.pattern_id == "bearish_tasuki_gap"
 
 
 def test_downside_tasuki_gap_not_detected_gap_filled():
@@ -337,6 +364,8 @@ def test_bearish_harami_variant_detected():
     # c1.close=105 < c0.close=110 -> shows weakness
     results = detect_2_candle_bearish(c0, c1)
     assert any(r.name == "陰の陽はらみ（弱気バリアント）" for r in results)
+    match = next(r for r in results if r.name == "陰の陽はらみ（弱気バリアント）")
+    assert match.pattern_id == "bearish_harami_variant"
 
 
 def test_bearish_harami_variant_not_detected_no_breakdown():

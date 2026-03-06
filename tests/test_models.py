@@ -170,6 +170,52 @@ class TestPatternResult:
 
 
 # ============================================================
+# PatternResult backward compatibility (pattern_id)
+# ============================================================
+class TestPatternResultBackwardCompat:
+    def test_without_pattern_id_defaults_to_none(self) -> None:
+        from app.models.candle import PatternResult
+
+        pattern = PatternResult(
+            type="confirmed",
+            name="モーニングスター",
+            signal="🔼 強気シグナル",
+            description="上昇転換の可能性があります。",
+            direction="bullish",
+            pattern_candle_count=3,
+        )
+        assert pattern.pattern_id is None
+
+    def test_with_pattern_id_serializes_correctly(self) -> None:
+        from app.models.candle import PatternResult
+
+        pattern = PatternResult(
+            type="confirmed",
+            name="モーニングスター",
+            signal="🔼 強気シグナル",
+            description="上昇転換の可能性があります。",
+            direction="bullish",
+            pattern_candle_count=3,
+            pattern_id="morning_star",
+        )
+        assert pattern.pattern_id == "morning_star"
+
+    def test_json_output_includes_pattern_id_key(self) -> None:
+        from app.models.candle import PatternResult
+
+        pattern = PatternResult(
+            type="confirmed",
+            name="モーニングスター",
+            signal="🔼 強気シグナル",
+            description="上昇転換の可能性があります。",
+            direction="bullish",
+            pattern_candle_count=3,
+        )
+        data = pattern.model_dump()
+        assert "pattern_id" in data
+
+
+# ============================================================
 # ShortInterest
 # ============================================================
 class TestShortInterest:
