@@ -2,11 +2,38 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import pandas as pd
+import pytz
 import yfinance as yf
 
 from app.exceptions import DataFetchError, TickerNotEquityError, TickerNotFoundError
 from app.models.candle import CandleData, ShortInterest
+
+US_EASTERN = pytz.timezone("US/Eastern")
+MARKET_OPEN_MIN = 9 * 60 + 30  # 9:30 ET
+MARKET_CLOSE_MIN = 16 * 60  # 16:00 ET
+
+
+def _is_market_open() -> bool:
+    """Check if US stock market is currently open."""
+    now_et = datetime.now(US_EASTERN)
+    if now_et.weekday() >= 5:  # Saturday/Sunday
+        return False
+    minutes = now_et.hour * 60 + now_et.minute
+    return MARKET_OPEN_MIN <= minutes < MARKET_CLOSE_MIN
+
+
+def _drop_intraday_bar(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop today's unconfirmed bar if market is still open."""
+    if df.empty or not _is_market_open():
+        return df
+    today = datetime.now(US_EASTERN).date()
+    last_date = df.index[-1].date()
+    if last_date == today:
+        return df.iloc[:-1]
+    return df
 
 
 def validate_ticker(ticker: str) -> dict:
@@ -33,13 +60,17 @@ def validate_ticker(ticker: str) -> dict:
 
 
 def get_ohlcv(
-    ticker: str, candle_count: int = 3
+    ticker: str,
+    candle_count: int = 3,
+    *,
+    confirmed_only: bool = True,
 ) -> tuple[list[CandleData], float | None]:
     """Fetch most recent candles and ATR(14).
 
     Args:
         ticker: Stock ticker symbol.
         candle_count: Number of candles to return (2 or 3, default 3).
+        confirmed_only: If True, exclude today's unconfirmed bar during market hours.
 
     Returns (candles, atr).
     Uses history(period='5d') for candles (last N rows).
@@ -49,8 +80,10 @@ def get_ohlcv(
     try:
         t = yf.Ticker(ticker)
 
-        # Fetch candle data (last N rows of 5d history)
+        # Fetch candle data
         hist_5d = t.history(period="5d")
+        if confirmed_only:
+            hist_5d = _drop_intraday_bar(hist_5d)
         last_3 = hist_5d.tail(candle_count)
 
         candles = []

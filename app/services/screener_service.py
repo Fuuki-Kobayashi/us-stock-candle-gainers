@@ -17,7 +17,9 @@ def scan_tickers(tickers: list[str], candle_count: int = 3) -> list[TickerScanRe
     for ticker in tickers:
         try:
             stock_data.validate_ticker(ticker)
-            candles, _atr = stock_data.get_ohlcv(ticker, candle_count)
+            candles, _atr = stock_data.get_ohlcv(
+                ticker, candle_count, confirmed_only=False
+            )
             patterns = pattern_detector.detect_patterns(candles, mode=mode)
             change_pct = (
                 (candles[-1].close - candles[-2].close) / candles[-2].close * 100
