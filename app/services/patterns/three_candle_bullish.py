@@ -142,7 +142,7 @@ def detect_3_candle_bullish(
                 type=_TYPE,
                 direction="bullish",
                 pattern_candle_count=3,
-                name="スリー・インサイド・アップ",
+                name="スリー・インサイド・アップ（D3S）",
                 signal=_SIGNAL,
                 description="はらみ線の後に上抜ける陽線で、安全な反転確認です。",
             )

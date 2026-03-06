@@ -132,7 +132,7 @@ def detect_predicted(c0: CandleData, c1: CandleData) -> list[PatternResult]:
                 type="predicted",
                 direction="bullish",
                 pattern_candle_count=3,
-                name="スリー・インサイド・アップ予測",
+                name="スリー・インサイド・アップ（D3S）予測",
                 signal="🔼 強気シグナル（予測）",
                 description="スリー・インサイド・アップの初期形成（はらみ線）が見られます。",
                 required_third=(f"3本目の陽線の終値が {_fmt(target)} を上回れば完成"),
