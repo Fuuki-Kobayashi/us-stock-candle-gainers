@@ -29,8 +29,10 @@
             --bearish-glow: #ff4d6a66;
             --accent: #6366f1;
             --accent-dim: #6366f133;
-            --predicted: #a78bfa;
-            --predicted-dim: #a78bfa22;
+            --predicted-bullish: #6ee7b7;
+            --predicted-bullish-dim: #6ee7b722;
+            --predicted-bearish: #fca5a5;
+            --predicted-bearish-dim: #fca5a522;
         }
 
         * { box-sizing: border-box; }
@@ -145,10 +147,15 @@
             color: var(--accent);
             border: 1px solid #6366f144;
         }
-        .tag-predicted {
-            background: var(--predicted-dim);
-            color: var(--predicted);
-            border: 1px solid #a78bfa33;
+        .tag-predicted-bullish {
+            background: var(--predicted-bullish-dim);
+            color: var(--predicted-bullish);
+            border: 1px solid #6ee7b733;
+        }
+        .tag-predicted-bearish {
+            background: var(--predicted-bearish-dim);
+            color: var(--predicted-bearish);
+            border: 1px solid #fca5a533;
         }
 
         /* Filter buttons */
@@ -300,8 +307,8 @@
                 </div>
             </div>
             <p id="modal-description" class="text-sm leading-relaxed mb-4" style="color: var(--text-secondary);"></p>
-            <div id="modal-required" class="hidden rounded-lg p-3 mb-4" style="background: var(--predicted-dim); border: 1px solid #a78bfa22;">
-                <p class="text-sm font-mono" style="color: var(--predicted);"></p>
+            <div id="modal-required" class="hidden rounded-lg p-3 mb-4">
+                <p class="text-sm font-mono"></p>
             </div>
             <div id="modal-meta" class="rounded-lg p-3" style="background: var(--bg-base); border: 1px solid var(--border-subtle);">
                 <div class="flex items-center gap-4 text-xs" style="color: var(--text-muted);">
@@ -616,7 +623,7 @@
             badge.style.color = dot.style.background = 'var(--bullish)';
         } else if (d1 !== '' && d2 !== '') {
             badge.textContent = 'シミュレーション（予測）';
-            badge.style.color = dot.style.background = 'var(--predicted)';
+            badge.style.color = dot.style.background = 'var(--accent)';
         } else {
             badge.textContent = 'リアルデータモード';
             badge.style.color = dot.style.background = 'var(--accent)';
@@ -712,15 +719,24 @@
         const isBullish = p.signal && p.signal.includes('強気');
         const isBearish = p.signal && p.signal.includes('弱気');
 
+        const isPredicted = p.type === 'predicted';
+
         // Tag
         const tagEl = document.getElementById('modal-tag');
-        tagEl.textContent = p.type === 'confirmed' ? '確定' : '予測';
-        tagEl.className = 'tag ' + (p.type === 'confirmed' ? 'tag-confirmed' : 'tag-predicted');
+        tagEl.textContent = isPredicted ? '予測' : '確定';
+        tagEl.className = isPredicted
+            ? 'tag ' + (isBullish ? 'tag-predicted-bullish' : 'tag-predicted-bearish')
+            : 'tag tag-confirmed';
 
         // Signal
         const sigEl = document.getElementById('modal-signal');
         sigEl.textContent = p.signal || '';
-        sigEl.style.color = isBullish ? 'var(--bullish)' : isBearish ? 'var(--bearish)' : 'var(--text-secondary)';
+        const predColor = isBullish ? 'var(--predicted-bullish)' : 'var(--predicted-bearish)';
+        sigEl.style.color = isBullish
+            ? (isPredicted ? 'var(--predicted-bullish)' : 'var(--bullish)')
+            : isBearish
+            ? (isPredicted ? 'var(--predicted-bearish)' : 'var(--bearish)')
+            : 'var(--text-secondary)';
 
         // Name & Description
         document.getElementById('modal-name').textContent = p.name || '';
@@ -740,7 +756,13 @@
 
         // Required 3rd
         const reqEl = document.getElementById('modal-required');
-        if (p.type === 'predicted' && p.required_third != null) {
+        if (isPredicted && p.required_third != null) {
+            const mPredColor = isBullish ? 'var(--predicted-bullish)' : 'var(--predicted-bearish)';
+            const mPredDim = isBullish ? 'var(--predicted-bullish-dim)' : 'var(--predicted-bearish-dim)';
+            const mPredBorder = isBullish ? '#6ee7b722' : '#fca5a522';
+            reqEl.style.background = mPredDim;
+            reqEl.style.border = '1px solid ' + mPredBorder;
+            reqEl.querySelector('p').style.color = mPredColor;
             reqEl.classList.remove('hidden');
             reqEl.querySelector('p').innerHTML = '必要な3日目: <span class="font-bold">' + p.required_third + '</span>';
         } else {
@@ -1183,16 +1205,26 @@
         grid.innerHTML = patterns.map((p, i) => {
             const isBullish = p.signal && p.signal.includes('強気');
             const isBearish = p.signal && p.signal.includes('弱気');
+            const isPredicted = p.type === 'predicted';
             const cardClass = isBullish ? 'pattern-card-bullish' : isBearish ? 'pattern-card-bearish' : '';
-            const signalColor = isBullish ? 'var(--bullish)' : isBearish ? 'var(--bearish)' : 'var(--text-secondary)';
-            const tagClass = p.type === 'confirmed' ? 'tag-confirmed' : 'tag-predicted';
-            const tagLabel = p.type === 'confirmed' ? '確定' : '予測';
+            const signalColor = isBullish
+                ? (isPredicted ? 'var(--predicted-bullish)' : 'var(--bullish)')
+                : isBearish
+                ? (isPredicted ? 'var(--predicted-bearish)' : 'var(--bearish)')
+                : 'var(--text-secondary)';
+            const tagClass = isPredicted
+                ? (isBullish ? 'tag-predicted-bullish' : 'tag-predicted-bearish')
+                : 'tag-confirmed';
+            const tagLabel = isPredicted ? '予測' : '確定';
+            const predColor = isBullish ? 'var(--predicted-bullish)' : 'var(--predicted-bearish)';
+            const predDim = isBullish ? 'var(--predicted-bullish-dim)' : 'var(--predicted-bearish-dim)';
+            const predBorder = isBullish ? '#6ee7b722' : '#fca5a522';
 
             let requiredHtml = '';
-            if (p.type === 'predicted' && p.required_third != null) {
+            if (isPredicted && p.required_third != null) {
                 requiredHtml = `
-                    <div class="mt-3 rounded-lg p-2.5" style="background: var(--predicted-dim); border: 1px solid #a78bfa22;">
-                        <p class="text-[11px] font-mono" style="color: var(--predicted);">
+                    <div class="mt-3 rounded-lg p-2.5" style="background: ${predDim}; border: 1px solid ${predBorder};">
+                        <p class="text-[11px] font-mono" style="color: ${predColor};">
                             必要な3日目: <span class="font-bold">${p.required_third}</span>
                         </p>
                     </div>
