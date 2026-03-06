@@ -28,8 +28,10 @@
             --bearish-glow: #ff4d6a66;
             --accent: #6366f1;
             --accent-dim: #6366f133;
-            --predicted: #a78bfa;
-            --predicted-dim: #a78bfa22;
+            --predicted-bullish: #6ee7b7;
+            --predicted-bullish-dim: #6ee7b722;
+            --predicted-bearish: #fca5a5;
+            --predicted-bearish-dim: #fca5a522;
         }
 
         * { box-sizing: border-box; }
@@ -131,10 +133,15 @@
             color: var(--bearish);
             border: 1px solid #ff4d6a44;
         }
-        .tag-predicted {
-            background: var(--predicted-dim);
-            color: var(--predicted);
-            border: 1px solid #a78bfa33;
+        .tag-predicted-bullish {
+            background: #ffffff22;
+            color: var(--predicted-bullish);
+            border: 1px solid #ffffff22;
+        }
+        .tag-predicted-bearish {
+            background: #ffffff22;
+            color: var(--predicted-bearish);
+            border: 1px solid #ffffff22;
         }
 
         /* Scan button */
@@ -477,7 +484,7 @@
                 var isBearish = p.direction === 'bearish' || (p.signal && p.signal.indexOf('\u5F31\u6C17') !== -1);
                 var isPredicted = p.type === 'predicted';
                 var tagClass = 'tag-bullish';
-                if (isPredicted) tagClass = 'tag-predicted';
+                if (isPredicted) tagClass = isBullish ? 'tag-predicted-bullish' : 'tag-predicted-bearish';
                 else if (isBearish) tagClass = 'tag-bearish';
                 return '<span class="tag ' + tagClass + '" style="font-size: 9px; padding: 1px 6px;">' + escapeHtml(p.name) + '</span>';
             }).join('');
