@@ -52,6 +52,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="宵の明星",
+                pattern_id="evening_star",
                 signal="🔽 弱気シグナル",
                 description="上昇トレンドからの反転を示唆する3本パターンです。",
             )
@@ -74,6 +75,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="三羽烏（黒三兵）",
+                pattern_id="three_black_crows",
                 signal="🔽 弱気シグナル",
                 description="3本連続の陰線で、強い下降トレンドを示唆します。",
             )
@@ -102,6 +104,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="スリー・インサイド・ダウン",
+                pattern_id="three_inside_down",
                 signal="🔽 弱気シグナル",
                 description="はらみ線の後に下抜けが確認された弱気パターンです。",
             )
@@ -127,6 +130,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="スリー・アウトサイド・ダウン",
+                pattern_id="three_outside_down",
                 signal="🔽 弱気シグナル",
                 description="包み足の後に続落が確認された弱気パターンです。",
             )
@@ -141,6 +145,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="三つの星天井",
+                pattern_id="three_stars_top",
                 signal="🔽 弱気シグナル",
                 description="天井圏で3本連続の小実体が出現し、下落への転換を示唆します。",
             )
@@ -166,6 +171,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="南の三つ星（弱気）",
+                pattern_id="three_stars_south_bearish",
                 signal="🔽 弱気シグナル",
                 description="3本連続の小実体陽線でレンジが縮小し、買い手の力尽きを示唆します。",
             )
@@ -185,6 +191,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="インサイドバーの弱気ブレイク",
+                pattern_id="inside_bar_bearish_break",
                 signal="🔽 弱気シグナル",
                 description="インサイドバーから下方にブレイクアウトした弱気パターンです。",
             )
@@ -204,6 +211,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="スティック・サンドイッチ（弱気）",
+                pattern_id="stick_sandwich_bearish",
                 signal="🔽 弱気シグナル",
                 description="同じ終値で天井が確認された弱気パターンです。",
             )
@@ -227,6 +235,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="ユニーク・スリー星・リバー（弱気）",
+                pattern_id="unique_three_river_bearish",
                 signal="🔽 弱気シグナル",
                 description="大陽線の後に小陽線と小陰線が続く天井パターンです。",
             )
@@ -251,6 +260,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="最後の抱き線（弱気）",
+                pattern_id="last_engulfing_bearish",
                 signal="🔽 弱気シグナル",
                 description="窓を開けた後に大陰線が前の陽線を包む弱気パターンです。",
             )
@@ -274,6 +284,7 @@ def detect_3_candle_bearish(
                 direction="bearish",
                 pattern_candle_count=3,
                 name="窓開け後の「あて首」継続",
+                pattern_id="gap_neck_continuation",
                 signal="🔽 弱気シグナル",
                 description="窓を開けた後にあて首線で反発するも続落するパターンです。",
             )

@@ -1,0 +1,448 @@
+"""Static registry of all 60 candlestick patterns."""
+
+from app.models.pattern_search import PatternEntry
+
+# All 60 patterns
+_PATTERN_REGISTRY: list[PatternEntry] = [
+    # === 1-candle patterns (4, all bearish, confirmed only) ===
+    PatternEntry(
+        id="bearish_pin_bar",
+        name="ベアリッシュ・ピンバー",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=1,
+    ),
+    PatternEntry(
+        id="gravestone_doji",
+        name="トウバ（墓石十字）",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=1,
+    ),
+    PatternEntry(
+        id="hanging_man",
+        name="首吊り線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=1,
+    ),
+    PatternEntry(
+        id="shooting_star",
+        name="流れ星",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=1,
+    ),
+    # === 2-candle bullish (15, confirmed only) ===
+    PatternEntry(
+        id="bullish_engulfing",
+        name="包み線（抱き線）",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bullish_harami",
+        name="はらみ線",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="harami_cross",
+        name="はらみ寄せ線",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="piercing_line",
+        name="切り込み線",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="tweezers_bottom",
+        name="毛抜き底",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bullish_meeting_line",
+        name="出会い線（逆襲線）",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="matching_low",
+        name="並び底（ズバリ線）",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="homing_pigeon",
+        name="鳩の帰巣",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bullish_last_engulfing",
+        name="最後の抱き線",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="tasuki_bottom",
+        name="タスキ底",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="double_pin_bar",
+        name="ダブル・ピンバー",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bullish_kicking",
+        name="行き違い線（キッキング）",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bullish_separating_line",
+        name="振り分け線",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bullish_harami_bullish",
+        name="陽の陽はらみ",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="breakaway_gap",
+        name="ブレイクアウェイ・ギャップ",
+        direction="bullish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    # === 2-candle bearish (15, confirmed only) ===
+    PatternEntry(
+        id="bearish_engulfing",
+        name="陰の陽包み",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_harami",
+        name="陰の陽はらみ",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="dark_cloud_cover",
+        name="かぶせ線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="tweezers_top",
+        name="毛抜き天井",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_meeting_line",
+        name="出会い線（弱気）",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_last_engulfing",
+        name="最後の抱き線（弱気）",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="thrusting_line",
+        name="差し込み線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="on_neck_line",
+        name="あて首線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="in_neck_line",
+        name="入り首線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_kicking",
+        name="行き違い線（弱気）",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_separating_line",
+        name="振り分線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_breakaway_gap",
+        name="下降の窓開け突破",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="falling_twin_black",
+        name="下放れ並び黒",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_tasuki_gap",
+        name="下放れタスキ線",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    PatternEntry(
+        id="bearish_harami_variant",
+        name="陰の陽はらみ（弱気バリアント）",
+        direction="bearish",
+        available_types=["confirmed"],
+        pattern_candle_count=2,
+    ),
+    # === 3-candle bullish (15, confirmed + predicted) ===
+    PatternEntry(
+        id="morning_star",
+        name="明けの明星",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="morning_doji_star",
+        name="明けの十字星",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="abandoned_baby_bottom",
+        name="捨て子底",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_red_soldiers",
+        name="赤三兵",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_inside_up",
+        name="スリー・インサイド・アップ（D3S）",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_outside_up",
+        name="スリー・アウトサイド・アップ",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="morning_pin_bar",
+        name="モーニング・ピンバー・リバーサル",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_stars_bottom",
+        name="三つの星底",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="stick_sandwich",
+        name="スティック・サンドイッチ",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_stars_south",
+        name="南の三つ星",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="unique_three_river",
+        name="ユニーク・スリー・リバー",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="downside_gap_three_methods",
+        name="下放れ三法",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="upside_tasuki_gap",
+        name="上放れタスキ線",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="upside_gap_two_crows",
+        name="上放れ並び赤",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="inside_bar_breakout",
+        name="インサイドバーの上抜け",
+        direction="bullish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    # === 3-candle bearish (11, confirmed + predicted) ===
+    PatternEntry(
+        id="evening_star",
+        name="宵の明星",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_black_crows",
+        name="三羽烏（黒三兵）",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_inside_down",
+        name="スリー・インサイド・ダウン",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_outside_down",
+        name="スリー・アウトサイド・ダウン",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_stars_top",
+        name="三つの星天井",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="three_stars_south_bearish",
+        name="南の三つ星（弱気）",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="inside_bar_bearish_break",
+        name="インサイドバーの弱気ブレイク",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="stick_sandwich_bearish",
+        name="スティック・サンドイッチ（弱気）",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="unique_three_river_bearish",
+        name="ユニーク・スリー星・リバー（弱気）",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="last_engulfing_bearish",
+        name="最後の抱き線（弱気）",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+    PatternEntry(
+        id="gap_neck_continuation",
+        name="窓開け後の「あて首」継続",
+        direction="bearish",
+        available_types=["confirmed", "predicted"],
+        pattern_candle_count=3,
+    ),
+]
+
+
+def get_all_patterns() -> list[PatternEntry]:
+    """Return all registered patterns."""
+    return list(_PATTERN_REGISTRY)
+
+
+def validate_pattern_ids(pattern_ids: list[str]) -> None:
+    """Validate that all pattern IDs exist in registry.
+
+    Raises ValueError for invalid IDs.
+    """
+    valid_ids = {p.id for p in _PATTERN_REGISTRY}
+    invalid = [pid for pid in pattern_ids if pid not in valid_ids]
+    if invalid:
+        raise ValueError(f"Invalid pattern IDs: {', '.join(invalid)}")

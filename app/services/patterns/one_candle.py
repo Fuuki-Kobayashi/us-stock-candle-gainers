@@ -36,6 +36,7 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
                 direction="bearish",
                 pattern_candle_count=1,
                 name="ベアリッシュ・ピンバー",
+                pattern_id="bearish_pin_bar",
                 signal="🔽 弱気シグナル",
                 description="上ヒゲが長く、高値圏での売り圧力を示唆します。",
             )
@@ -53,6 +54,7 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
                     direction="bearish",
                     pattern_candle_count=1,
                     name="トウバ（墓石十字）",
+                    pattern_id="gravestone_doji",
                     signal="🔽 弱気シグナル",
                     description="買い手が完全に押し戻された十字線で、天井シグナルです。",
                 )
@@ -69,6 +71,7 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
                         direction="bearish",
                         pattern_candle_count=1,
                         name="首吊り線",
+                        pattern_id="hanging_man",
                         signal="🔽 弱気シグナル",
                         description="高値圏で出現する小実体・長い下ヒゲのパターンで、下落の警告です。",
                     )
@@ -84,6 +87,7 @@ def detect_1_candle(candle: CandleData) -> list[PatternResult]:
                         direction="bearish",
                         pattern_candle_count=1,
                         name="流れ星",
+                        pattern_id="shooting_star",
                         signal="🔽 弱気シグナル",
                         description="高値で買われた後に激しく売り戻されたパターンです。",
                     )

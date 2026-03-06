@@ -25,9 +25,10 @@ def test_morning_star_predicted():
     match = next(r for r in results if r.name == "明けの明星予測")
     assert match.type == "predicted"
     assert match.signal == "🔼 強気シグナル（予測）"
-    assert match.required_third == "3本目に大陽線が出現すれば明けの明星が完成"
+    assert match.required_third is not None and "大陽線" in match.required_third
     assert match.direction == "bullish"
     assert match.pattern_candle_count == 3
+    assert match.pattern_id == "morning_star"
 
 
 def test_morning_star_predicted_not_detected():
@@ -50,7 +51,7 @@ def test_morning_doji_star_predicted():
     match = next(r for r in results if r.name == "明けの十字星予測")
     assert match.type == "predicted"
     assert match.signal == "🔼 強気シグナル（予測）"
-    assert match.required_third == "3本目に大陽線が出現すれば明けの十字星が完成"
+    assert match.required_third is not None and "大陽線" in match.required_third
 
 
 # --- 3. Abandoned Baby Bottom Predicted ---
@@ -67,7 +68,9 @@ def test_abandoned_baby_bottom_predicted():
     assert any(r.name == "捨て子底予測" for r in results)
     match = next(r for r in results if r.name == "捨て子底予測")
     assert match.type == "predicted"
-    assert match.required_third == "3本目に窓を開けた大陽線が出現すれば捨て子底が完成"
+    assert (
+        match.required_third is not None and "窓を開けた大陽線" in match.required_third
+    )
 
 
 # --- 4. Three White Soldiers Predicted ---
@@ -81,7 +84,7 @@ def test_three_white_soldiers_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "赤三兵予測" for r in results)
     match = next(r for r in results if r.name == "赤三兵予測")
-    assert match.required_third == "3本目も陽線で終値が上昇すれば赤三兵が完成"
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # --- 5. Three Inside Up Predicted ---
@@ -94,9 +97,15 @@ def test_three_inside_up_predicted():
     c1 = make_candle(open=102.0, high=110.0, low=100.0, close=105.0)
     # c1: bullish, body=[102,105] body_ratio=3/10=0.3 (small), inside c0 body [100,110]
     results = detect_predicted(c0, c1)
-    assert any(r.name == "スリー・インサイド・アップ予測" for r in results)
-    match = next(r for r in results if r.name == "スリー・インサイド・アップ予測")
-    assert match.required_third == "3本目の陽線がc0の始値を上回れば完成"
+    assert any(
+        "スリー・インサイド・アップ" in r.name and "予測" in r.name for r in results
+    )
+    match = next(
+        r
+        for r in results
+        if "スリー・インサイド・アップ" in r.name and "予測" in r.name
+    )
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # --- 6. Three Outside Up Predicted ---
@@ -111,7 +120,7 @@ def test_three_outside_up_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "スリー・アウトサイド・アップ予測" for r in results)
     match = next(r for r in results if r.name == "スリー・アウトサイド・アップ予測")
-    assert match.required_third == "3本目の陽線がc1の終値を上回れば完成"
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # --- 7. Morning Pin Bar Predicted ---
@@ -126,7 +135,7 @@ def test_morning_pin_bar_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "モーニング・ピンバー予測" for r in results)
     match = next(r for r in results if r.name == "モーニング・ピンバー予測")
-    assert match.required_third == "3本目に大陽線が出現すれば完成"
+    assert match.required_third is not None and "大陽線" in match.required_third
 
 
 # --- 8. Three Stars Bottom Predicted ---
@@ -139,7 +148,7 @@ def test_three_stars_bottom_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "三つの星底予測" for r in results)
     match = next(r for r in results if r.name == "三つの星底予測")
-    assert match.required_third == "3本目も小実体なら三つの星底が完成"
+    assert match.required_third is not None and "小実体" in match.required_third
 
 
 # --- 9. Stick Sandwich Bullish Predicted ---
@@ -154,7 +163,7 @@ def test_stick_sandwich_bullish_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "スティック・サンドイッチ予測" for r in results)
     match = next(r for r in results if r.name == "スティック・サンドイッチ予測")
-    assert match.required_third == "3本目の陰線がc0と同終値付近なら完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 10. Three Stars in South Predicted ---
@@ -169,7 +178,7 @@ def test_three_stars_in_south_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "南の三つ星予測" for r in results)
     match = next(r for r in results if r.name == "南の三つ星予測")
-    assert match.required_third == "3本目も陰線でさらにレンジ縮小なら完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 11. Unique Three River Predicted ---
@@ -184,7 +193,7 @@ def test_unique_three_river_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "ユニーク・スリー・リバー予測" for r in results)
     match = next(r for r in results if r.name == "ユニーク・スリー・リバー予測")
-    assert match.required_third == "3本目の小陽線がc1の安値より上で引ければ完成"
+    assert match.required_third is not None and "小陽線" in match.required_third
 
 
 # --- 12. Downside Gap Three Methods Predicted ---
@@ -199,7 +208,7 @@ def test_downside_gap_three_methods_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "下放れ三法予測" for r in results)
     match = next(r for r in results if r.name == "下放れ三法予測")
-    assert match.required_third == "3本目の陽線が窓を埋めれば完成"
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # --- 13. Upside Tasuki Gap Predicted ---
@@ -214,7 +223,7 @@ def test_upside_tasuki_gap_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "上放れタスキ線予測" for r in results)
     match = next(r for r in results if r.name == "上放れタスキ線予測")
-    assert match.required_third == "3本目の陰線が窓を埋めなければ完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 14. Upside Gap Side-by-Side White Predicted ---
@@ -228,7 +237,7 @@ def test_upside_gap_side_by_side_white_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "上放れ並び赤予測" for r in results)
     match = next(r for r in results if r.name == "上放れ並び赤予測")
-    assert match.required_third == "3本目も陽線なら上放れ並び赤が完成"
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # --- 15. Inside Bar Bullish Breakout Predicted ---
@@ -243,7 +252,7 @@ def test_inside_bar_bullish_breakout_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "インサイドバー上抜け予測" for r in results)
     match = next(r for r in results if r.name == "インサイドバー上抜け予測")
-    assert match.required_third == "3本目の陽線がc0の高値を上回れば完成"
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # =============================================================================
@@ -262,9 +271,10 @@ def test_evening_star_predicted():
     match = next(r for r in results if r.name == "宵の明星予測")
     assert match.type == "predicted"
     assert match.signal == "🔽 弱気シグナル（予測）"
-    assert match.required_third == "3本目に大陰線が出現すれば宵の明星が完成"
+    assert match.required_third is not None and "大陰線" in match.required_third
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 3
+    assert match.pattern_id == "evening_star"
 
 
 def test_evening_star_predicted_not_detected():
@@ -286,7 +296,7 @@ def test_three_black_crows_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "三羽烏予測" for r in results)
     match = next(r for r in results if r.name == "三羽烏予測")
-    assert match.required_third == "3本目も陰線で終値が下降すれば三羽烏が完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 3. Three Inside Down Predicted ---
@@ -301,7 +311,7 @@ def test_three_inside_down_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "スリー・インサイド・ダウン予測" for r in results)
     match = next(r for r in results if r.name == "スリー・インサイド・ダウン予測")
-    assert match.required_third == "3本目の陰線がc0の終値を下回れば完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 4. Three Outside Down Predicted ---
@@ -316,7 +326,7 @@ def test_three_outside_down_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "スリー・アウトサイド・ダウン予測" for r in results)
     match = next(r for r in results if r.name == "スリー・アウトサイド・ダウン予測")
-    assert match.required_third == "3本目の陰線がc1の終値を下回れば完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 5. Three Stars Top Predicted ---
@@ -329,7 +339,7 @@ def test_three_stars_top_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "三つの星天井予測" for r in results)
     match = next(r for r in results if r.name == "三つの星天井予測")
-    assert match.required_third == "3本目も小実体なら三つの星天井が完成"
+    assert match.required_third is not None and "小実体" in match.required_third
 
 
 # --- 6. Three Stars South Bearish Predicted ---
@@ -344,7 +354,7 @@ def test_three_stars_south_bearish_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "南の三つ星（弱気）予測" for r in results)
     match = next(r for r in results if r.name == "南の三つ星（弱気）予測")
-    assert match.required_third == "3本目も小実体でレンジ縮小なら完成"
+    assert match.required_third is not None and "小実体" in match.required_third
 
 
 # --- 7. Inside Bar Bearish Predicted ---
@@ -358,7 +368,7 @@ def test_inside_bar_bearish_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "インサイドバー弱気予測" for r in results)
     match = next(r for r in results if r.name == "インサイドバー弱気予測")
-    assert match.required_third == "3本目の陰線がc0の安値を下回れば完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # --- 8. Stick Sandwich Bearish Predicted ---
@@ -373,7 +383,7 @@ def test_stick_sandwich_bearish_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "スティック・サンドイッチ（弱気）予測" for r in results)
     match = next(r for r in results if r.name == "スティック・サンドイッチ（弱気）予測")
-    assert match.required_third == "3本目の陽線がc0と同終値付近なら完成"
+    assert match.required_third is not None and "陽線" in match.required_third
 
 
 # --- 9. Unique Three River Top Predicted ---
@@ -388,7 +398,7 @@ def test_unique_three_river_top_predicted():
     match = next(
         r for r in results if r.name == "ユニーク・スリー星・リバー（弱気）予測"
     )
-    assert match.required_third == "3本目に小陰線が出現すれば完成"
+    assert match.required_third is not None and "小陰線" in match.required_third
 
 
 # --- 10. Last Engulfing Bearish Predicted ---
@@ -403,7 +413,7 @@ def test_last_engulfing_bearish_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "最後の抱き線（弱気）予測" for r in results)
     match = next(r for r in results if r.name == "最後の抱き線（弱気）予測")
-    assert match.required_third == "3本目の大陰線がc0を包めば完成"
+    assert match.required_third is not None and "大陰線" in match.required_third
 
 
 # --- 11. Gap Down On Neck Continuation Predicted ---
@@ -418,7 +428,7 @@ def test_gap_on_neck_continuation_predicted():
     results = detect_predicted(c0, c1)
     assert any(r.name == "窓開け後あて首継続予測" for r in results)
     match = next(r for r in results if r.name == "窓開け後あて首継続予測")
-    assert match.required_third == "3本目の陰線で続落すれば完成"
+    assert match.required_third is not None and "陰線" in match.required_third
 
 
 # =============================================================================

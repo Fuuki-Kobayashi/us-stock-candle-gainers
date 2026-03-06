@@ -21,6 +21,7 @@ def test_evening_star_detected():
     assert match.signal == "🔽 弱気シグナル"
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 3
+    assert match.pattern_id == "evening_star"
 
 
 def test_evening_star_not_detected_c2_not_large():
@@ -48,6 +49,7 @@ def test_three_black_crows_detected():
     match = next(r for r in results if r.name == "三羽烏（黒三兵）")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "three_black_crows"
 
 
 def test_three_black_crows_not_detected_ascending():
@@ -76,6 +78,7 @@ def test_three_inside_down_detected():
     match = next(r for r in results if r.name == "スリー・インサイド・ダウン")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "three_inside_down"
 
 
 def test_three_inside_down_not_detected_no_breakdown():
@@ -104,6 +107,7 @@ def test_three_outside_down_detected():
     match = next(r for r in results if r.name == "スリー・アウトサイド・ダウン")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "three_outside_down"
 
 
 def test_three_outside_down_not_detected_no_continuation():
@@ -132,6 +136,7 @@ def test_three_stars_top_detected():
     match = next(r for r in results if r.name == "三つの星天井")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "three_stars_top"
 
 
 def test_three_stars_top_not_detected_large_body():
@@ -160,6 +165,7 @@ def test_three_stars_south_bearish_detected():
     match = next(r for r in results if r.name == "南の三つ星（弱気）")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "three_stars_south_bearish"
 
 
 def test_three_stars_south_bearish_not_detected_not_bullish():
@@ -188,6 +194,7 @@ def test_inside_bar_bearish_breakout_detected():
     match = next(r for r in results if r.name == "インサイドバーの弱気ブレイク")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "inside_bar_bearish_break"
 
 
 def test_inside_bar_bearish_breakout_not_detected_no_break():
@@ -216,6 +223,7 @@ def test_stick_sandwich_bearish_detected():
     match = next(r for r in results if r.name == "スティック・サンドイッチ（弱気）")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "stick_sandwich_bearish"
 
 
 def test_stick_sandwich_bearish_not_detected_diff_close():
@@ -244,6 +252,7 @@ def test_unique_three_river_top_detected():
     match = next(r for r in results if r.name == "ユニーク・スリー星・リバー（弱気）")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "unique_three_river_bearish"
 
 
 def test_unique_three_river_top_not_detected_no_small():
@@ -271,6 +280,7 @@ def test_last_engulfing_bearish_detected():
     match = next(r for r in results if r.name == "最後の抱き線（弱気）")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "last_engulfing_bearish"
 
 
 def test_last_engulfing_bearish_not_detected_no_engulf():
@@ -299,6 +309,7 @@ def test_gap_on_neck_continuation_detected():
     match = next(r for r in results if r.name == "窓開け後の「あて首」継続")
     assert match.type == "confirmed"
     assert match.signal == "🔽 弱気シグナル"
+    assert match.pattern_id == "gap_neck_continuation"
 
 
 def test_gap_on_neck_continuation_not_detected_no_gap():

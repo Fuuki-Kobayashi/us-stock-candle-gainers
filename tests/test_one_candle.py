@@ -19,6 +19,7 @@ def test_bearish_pin_bar_detected():
     assert match.signal == "🔽 弱気シグナル"
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 1
+    assert match.pattern_id == "bearish_pin_bar"
 
 
 def test_bearish_pin_bar_not_detected_short_upper():
@@ -46,6 +47,7 @@ def test_gravestone_doji_detected():
     assert match.signal == "🔽 弱気シグナル"
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 1
+    assert match.pattern_id == "gravestone_doji"
 
 
 def test_gravestone_doji_not_detected_with_body():
@@ -72,6 +74,7 @@ def test_hanging_man_detected():
     assert match.signal == "🔽 弱気シグナル"
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 1
+    assert match.pattern_id == "hanging_man"
 
 
 def test_hanging_man_not_detected_large_body():
@@ -98,6 +101,7 @@ def test_shooting_star_detected():
     assert match.signal == "🔽 弱気シグナル"
     assert match.direction == "bearish"
     assert match.pattern_candle_count == 1
+    assert match.pattern_id == "shooting_star"
 
 
 def test_shooting_star_not_detected_large_lower():

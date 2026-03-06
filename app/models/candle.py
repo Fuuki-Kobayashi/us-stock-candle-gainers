@@ -23,6 +23,7 @@ class PatternResult(BaseModel):
     description: str  # Japanese description
     required_third: str | None = None  # 3rd candle condition (predicted only)
     direction: Literal["bullish", "bearish"]
+    pattern_id: str | None = None  # Machine-readable pattern identifier
     pattern_candle_count: Literal[1, 2, 3]
 
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screener - US Stock Candle Analysis</title>
+    <title>Pattern Search - US Stock Candle Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,10 +77,6 @@
             border: 1px solid var(--border-subtle);
             border-radius: 12px;
             transition: all 0.3s ease;
-        }
-        .card:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--border-glow);
         }
 
         /* Staggered reveal */
@@ -203,6 +199,101 @@
             background: var(--accent-dim);
         }
 
+        /* Toggle buttons */
+        .toggle-group {
+            display: inline-flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+        }
+        .toggle-btn {
+            background: var(--bg-base);
+            color: var(--text-muted);
+            border: none;
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Sora', sans-serif;
+        }
+        .toggle-btn:not(:last-child) {
+            border-right: 1px solid var(--border-subtle);
+        }
+        .toggle-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+        .toggle-btn:hover:not(.active) {
+            background: var(--bg-surface);
+            color: var(--text-secondary);
+        }
+
+        /* Action button (small) */
+        .btn-action {
+            background: var(--bg-base);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Sora', sans-serif;
+        }
+        .btn-action:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        /* Pattern checklist */
+        .pattern-checklist {
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-subtle) var(--bg-base);
+        }
+        .pattern-checklist::-webkit-scrollbar { width: 6px; }
+        .pattern-checklist::-webkit-scrollbar-track { background: var(--bg-base); border-radius: 3px; }
+        .pattern-checklist::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+
+        .pattern-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+        .pattern-item:hover {
+            background: var(--bg-surface);
+        }
+        .pattern-item label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 0;
+        }
+        .pattern-item input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .pattern-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         /* Collapsible */
         .collapsible-header {
             cursor: pointer;
@@ -235,8 +326,8 @@
     <div id="loading-overlay" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background: rgba(6,10,18,0.85); backdrop-filter: blur(4px);">
         <div class="text-center">
             <div class="inline-block w-14 h-14 border-[3px] rounded-full animate-spin mb-5" style="border-color: var(--accent); border-top-color: transparent;"></div>
-            <p class="text-xl font-bold" style="color: var(--text-primary);">スキャン中...</p>
-            <p class="text-sm mt-1 font-mono" style="color: var(--text-muted);">複数銘柄を分析しています</p>
+            <p class="text-xl font-bold" style="color: var(--text-primary);">検索中...</p>
+            <p class="text-sm mt-1 font-mono" style="color: var(--text-muted);">パターンを検索しています</p>
         </div>
     </div>
 
@@ -253,7 +344,7 @@
                 <h1 class="text-3xl font-extrabold tracking-tight" style="background: linear-gradient(135deg, #e2e8f0, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                     US Stock Candle Analysis
                 </h1>
-                <span class="tag" style="background: var(--accent-dim); color: var(--accent); border: 1px solid #6366f144; font-size: 10px;">Screener</span>
+                <span class="tag" style="background: var(--accent-dim); color: var(--accent); border: 1px solid #6366f144; font-size: 10px;">Pattern Search</span>
             </div>
             <div class="flex items-center justify-center gap-4 mt-2">
                 <a href="/" class="nav-link">
@@ -264,18 +355,64 @@
                         個別分析
                     </span>
                 </a>
-                <a href="/pattern-search" class="nav-link">
+                <a href="/screener" class="nav-link">
                     <span class="flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h16"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
-                        Pattern Search
+                        Screener
                     </span>
                 </a>
             </div>
         </header>
 
-        <!-- Input Form -->
+        <!-- Filter Section -->
+        <section class="card p-6 space-y-5">
+            <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <h2 class="text-sm font-bold tracking-wider uppercase" style="color: var(--text-secondary);">パターンフィルター</h2>
+            </div>
+
+            <!-- Direction + Type toggles -->
+            <div class="flex flex-wrap items-center gap-6">
+                <div>
+                    <label class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">方向</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-filter="direction" data-value="all" onclick="setFilter('direction', 'all', this)">全て</button>
+                        <button class="toggle-btn" data-filter="direction" data-value="bullish" onclick="setFilter('direction', 'bullish', this)">強気</button>
+                        <button class="toggle-btn" data-filter="direction" data-value="bearish" onclick="setFilter('direction', 'bearish', this)">弱気</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-2 tracking-wider uppercase" style="color: var(--text-muted);">タイプ</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-filter="type" data-value="all" onclick="setFilter('type', 'all', this)">全て</button>
+                        <button class="toggle-btn" data-filter="type" data-value="confirmed" onclick="setFilter('type', 'confirmed', this)">確定</button>
+                        <button class="toggle-btn" data-filter="type" data-value="predicted" onclick="setFilter('type', 'predicted', this)">予測</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action buttons + count -->
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <button class="btn-action" onclick="selectAllVisible()">全選択</button>
+                    <button class="btn-action" onclick="deselectAll()">全解除</button>
+                </div>
+                <span id="selected-count" class="text-xs font-mono font-medium" style="color: var(--text-muted);">0 パターン選択中</span>
+            </div>
+
+            <!-- Pattern checklist -->
+            <div id="pattern-checklist" class="pattern-checklist rounded-lg p-2" style="background: var(--bg-base); border: 1px solid var(--border-subtle);">
+                <div class="flex items-center justify-center py-8">
+                    <span class="text-sm font-mono" style="color: var(--text-muted);">パターンを読み込み中...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ticker Input -->
         <section class="card p-6">
             <div class="space-y-4">
                 <div>
@@ -283,13 +420,13 @@
                     <textarea id="tickers-input" rows="3" class="input-field" placeholder="AAPL, TSLA, NVDA, MSFT, GOOGL, AMZN, META, AMD, NFLX, JPM..." style="text-transform: uppercase;"></textarea>
                 </div>
                 <div class="flex items-center justify-between flex-wrap gap-4">
-                    <p class="text-xs font-mono" style="color: var(--text-muted);">最大50銘柄まで同時スキャン可能</p>
-                    <button id="scan-btn" onclick="scanTickers()" class="btn-scan">
+                    <p class="text-xs font-mono" style="color: var(--text-muted);">最大50銘柄まで同時検索可能</p>
+                    <button id="search-btn" onclick="searchPatterns()" class="btn-scan">
                         <span class="flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
-                            スキャン実行
+                            パターン検索
                         </span>
                     </button>
                 </div>
@@ -321,11 +458,11 @@
                 <div class="flex items-center gap-6 flex-wrap">
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full" style="background: var(--accent);"></div>
-                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-total" class="font-bold" style="color: var(--text-primary);">0</span> 銘柄スキャン</span>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-total" class="font-bold" style="color: var(--text-primary);">0</span> 銘柄中</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full" style="background: var(--bullish);"></div>
-                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-detected" class="font-bold" style="color: var(--bullish);">0</span> 銘柄でパターン検出</span>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);"><span id="summary-matched" class="font-bold" style="color: var(--bullish);">0</span> 銘柄でパターン検出</span>
                     </div>
                     <div id="summary-errors-wrap" class="flex items-center gap-2 hidden">
                         <div class="w-2 h-2 rounded-full" style="background: var(--bearish);"></div>
@@ -369,7 +506,9 @@
     // ============================================================
     // STATE
     // ============================================================
-    let errorTimeout = null;
+    var allPatterns = [];
+    var filters = { direction: 'all', type: 'all' };
+    var errorTimeout = null;
 
     // ============================================================
     // UTILITIES
@@ -389,23 +528,181 @@
     }
 
     function toggleCollapsible(id) {
-        const header = document.querySelector('#' + id + '-section .collapsible-header');
-        const body = document.getElementById(id + '-body');
+        var header = document.querySelector('#' + id + '-section .collapsible-header');
+        var body = document.getElementById(id + '-body');
         header.classList.toggle('open');
         body.classList.toggle('hidden');
     }
 
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
     // ============================================================
-    // MAIN SCAN
+    // FILTER LOGIC
     // ============================================================
-    async function scanTickers() {
-        const raw = document.getElementById('tickers-input').value.trim();
+    function setFilter(filterName, value, btn) {
+        // Update active state in toggle group
+        var group = btn.parentElement;
+        group.querySelectorAll('.toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+
+        var oldFilter = filters[filterName];
+        filters[filterName] = value;
+
+        // Determine which patterns were visible before and after
+        var previouslyVisible = getVisiblePatternIds(oldFilter, filterName === 'direction' ? filters.type : filters.direction, filterName);
+        var nowVisible = getVisiblePatternIds(value, filterName === 'direction' ? filters.type : filters.direction, filterName);
+
+        // Deselect patterns that are no longer visible
+        previouslyVisible.forEach(function(id) {
+            if (nowVisible.indexOf(id) === -1) {
+                var cb = document.querySelector('#cb-' + id);
+                if (cb) cb.checked = false;
+            }
+        });
+
+        renderChecklist();
+    }
+
+    function getVisiblePatternIds(filterValue, otherFilterValue, filterName) {
+        var dirFilter = filterName === 'direction' ? filterValue : filters.direction;
+        var typeFilter = filterName === 'type' ? filterValue : filters.type;
+        if (filterName === 'direction') {
+            dirFilter = filterValue;
+            typeFilter = otherFilterValue;
+        } else {
+            dirFilter = otherFilterValue;
+            typeFilter = filterValue;
+        }
+
+        return allPatterns.filter(function(p) {
+            if (dirFilter !== 'all' && p.direction !== dirFilter) return false;
+            if (typeFilter !== 'all') {
+                if (typeFilter === 'confirmed' && p.available_types.indexOf('confirmed') === -1) return false;
+                if (typeFilter === 'predicted' && p.available_types.indexOf('predicted') === -1) return false;
+            }
+            return true;
+        }).map(function(p) { return p.id; });
+    }
+
+    function isPatternVisible(pattern) {
+        if (filters.direction !== 'all' && pattern.direction !== filters.direction) return false;
+        if (filters.type !== 'all') {
+            if (filters.type === 'confirmed' && pattern.available_types.indexOf('confirmed') === -1) return false;
+            if (filters.type === 'predicted' && pattern.available_types.indexOf('predicted') === -1) return false;
+        }
+        return true;
+    }
+
+    function getCheckedPatternIds() {
+        var ids = [];
+        allPatterns.forEach(function(p) {
+            var cb = document.querySelector('#cb-' + p.id);
+            if (cb && cb.checked) ids.push(p.id);
+        });
+        return ids;
+    }
+
+    function updateSelectedCount() {
+        var count = getCheckedPatternIds().length;
+        document.getElementById('selected-count').textContent = count + ' パターン選択中';
+    }
+
+    function selectAllVisible() {
+        allPatterns.forEach(function(p) {
+            if (isPatternVisible(p)) {
+                var cb = document.querySelector('#cb-' + p.id);
+                if (cb) cb.checked = true;
+            }
+        });
+        updateSelectedCount();
+    }
+
+    function deselectAll() {
+        allPatterns.forEach(function(p) {
+            var cb = document.querySelector('#cb-' + p.id);
+            if (cb) cb.checked = false;
+        });
+        updateSelectedCount();
+    }
+
+    // ============================================================
+    // RENDER CHECKLIST
+    // ============================================================
+    function renderChecklist() {
+        var container = document.getElementById('pattern-checklist');
+        var html = '';
+
+        allPatterns.forEach(function(p) {
+            if (!isPatternVisible(p)) return;
+
+            var dirTag = p.direction === 'bullish'
+                ? '<span class="tag tag-bullish" style="font-size: 9px; padding: 1px 6px;">Bullish</span>'
+                : '<span class="tag tag-bearish" style="font-size: 9px; padding: 1px 6px;">Bearish</span>';
+
+            var typeTags = p.available_types.map(function(t) {
+                if (t === 'confirmed') {
+                    return '<span class="tag font-mono" style="font-size: 9px; padding: 1px 6px; background: var(--accent-dim); color: var(--accent); border: 1px solid #6366f144;">確定</span>';
+                } else {
+                    var predColor = p.direction === 'bullish' ? 'var(--predicted-bullish)' : 'var(--predicted-bearish)';
+                    var predBg = p.direction === 'bullish' ? 'var(--predicted-bullish-dim)' : 'var(--predicted-bearish-dim)';
+                    return '<span class="tag font-mono" style="font-size: 9px; padding: 1px 6px; background: ' + predBg + '; color: ' + predColor + '; border: 1px solid #ffffff22;">予測</span>';
+                }
+            }).join(' ');
+
+            var cb = document.querySelector('#cb-' + p.id);
+            var isChecked = cb ? cb.checked : true; // Default to checked on first render
+
+            html += '<div class="pattern-item">' +
+                '<label>' +
+                    '<input type="checkbox" id="cb-' + p.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="updateSelectedCount()">' +
+                    '<span class="pattern-name">' + escapeHtml(p.name) + '</span>' +
+                '</label>' +
+                '<div class="flex items-center gap-1.5 flex-shrink-0">' +
+                    dirTag + ' ' + typeTags +
+                '</div>' +
+            '</div>';
+        });
+
+        if (!html) {
+            html = '<div class="flex items-center justify-center py-6"><span class="text-sm font-mono" style="color: var(--text-muted);">該当パターンなし</span></div>';
+        }
+
+        container.innerHTML = html;
+        updateSelectedCount();
+    }
+
+    // ============================================================
+    // LOAD PATTERNS
+    // ============================================================
+    async function loadPatterns() {
+        try {
+            var res = await fetch('/api/patterns');
+            if (!res.ok) throw new Error('Failed to load patterns');
+            var data = await res.json();
+            allPatterns = data.patterns;
+            renderChecklist();
+        } catch (e) {
+            document.getElementById('pattern-checklist').innerHTML =
+                '<div class="flex items-center justify-center py-6"><span class="text-sm font-mono" style="color: var(--bearish);">パターンの読み込みに失敗しました</span></div>';
+        }
+    }
+
+    // ============================================================
+    // SEARCH
+    // ============================================================
+    async function searchPatterns() {
+        // Validate tickers
+        var raw = document.getElementById('tickers-input').value.trim();
         if (!raw) {
             showError('銘柄を入力してください');
             return;
         }
 
-        const tickers = raw.split(',')
+        var tickers = raw.split(',')
             .map(function(t) { return t.trim().toUpperCase(); })
             .filter(function(t) { return t.length > 0; });
 
@@ -414,29 +711,50 @@
             return;
         }
 
+        // Validate patterns
+        var patternIds = getCheckedPatternIds();
+        if (patternIds.length === 0) {
+            showError('パターンを選択してください');
+            return;
+        }
+
         hideError();
         showLoading();
-        document.getElementById('scan-btn').disabled = true;
+        document.getElementById('search-btn').disabled = true;
 
         try {
-            var res = await fetch('/screener', {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, 90000);
+
+            var res = await fetch('/api/pattern-search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tickers: tickers, candle_count: 3 }),
+                body: JSON.stringify({
+                    tickers: tickers,
+                    pattern_ids: patternIds,
+                    candle_count: 3
+                }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!res.ok) {
                 var err = await res.json();
-                throw new Error(err.detail || 'スキャンに失敗しました');
+                throw new Error(err.detail || '検索に失敗しました');
             }
 
             var data = await res.json();
             renderResults(data);
         } catch (e) {
-            showError(e.message);
+            if (e.name === 'AbortError') {
+                showError('検索がタイムアウトしました。銘柄数を減らして再試行してください。');
+            } else {
+                showError(e.message);
+            }
         } finally {
             hideLoading();
-            document.getElementById('scan-btn').disabled = false;
+            document.getElementById('search-btn').disabled = false;
         }
     }
 
@@ -455,7 +773,7 @@
         data.results.forEach(function(r) {
             if (r.error) {
                 errors.push(r);
-            } else if (r.patterns.length > 0) {
+            } else if (r.patterns && r.patterns.length > 0) {
                 withPatterns.push(r);
             } else {
                 noPatterns.push(r);
@@ -465,11 +783,9 @@
         // Sort by pattern count desc
         withPatterns.sort(function(a, b) { return b.patterns.length - a.patterns.length; });
 
-        var detected = withPatterns.length;
-
         // Summary bar
         document.getElementById('summary-total').textContent = data.total;
-        document.getElementById('summary-detected').textContent = detected;
+        document.getElementById('summary-matched').textContent = data.matched;
         document.getElementById('summary-errors').textContent = data.errors;
         document.getElementById('summary-errors-wrap').classList.toggle('hidden', data.errors === 0);
 
@@ -489,11 +805,10 @@
 
             var patternTags = r.patterns.map(function(p) {
                 var isBullish = p.direction === 'bullish' || (p.signal && p.signal.indexOf('\u5F37\u6C17') !== -1);
-                var isBearish = p.direction === 'bearish' || (p.signal && p.signal.indexOf('\u5F31\u6C17') !== -1);
                 var isPredicted = p.type === 'predicted';
                 var tagClass = 'tag-bullish';
                 if (isPredicted) tagClass = isBullish ? 'tag-predicted-bullish' : 'tag-predicted-bearish';
-                else if (isBearish) tagClass = 'tag-bearish';
+                else if (!isBullish) tagClass = 'tag-bearish';
                 return '<span class="tag ' + tagClass + '" style="font-size: 9px; padding: 1px 6px;">' + escapeHtml(p.name) + '</span>';
             }).join('');
 
@@ -552,15 +867,9 @@
         } else {
             errorSec.classList.add('hidden');
         }
-    }
 
-    // ============================================================
-    // ESCAPE HTML
-    // ============================================================
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(text));
-        return div.innerHTML;
+        // Scroll to results
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // ============================================================
@@ -568,9 +877,14 @@
     // ============================================================
     document.getElementById('tickers-input').addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            scanTickers();
+            searchPatterns();
         }
     });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    loadPatterns();
 </script>
 
 </body>
