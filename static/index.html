@@ -294,7 +294,10 @@
             </div>
             <h2 id="modal-name" class="text-xl font-bold mb-3" style="color: var(--text-primary);"></h2>
             <div class="flex justify-center mb-5">
-                <canvas id="modal-candle-canvas" class="rounded-lg" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"></canvas>
+                <div class="flex flex-col items-center">
+                    <canvas id="modal-candle-canvas" class="rounded-lg" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"></canvas>
+                    <span id="modal-candle-note" class="hidden text-[10px] mt-1" style="color: var(--text-muted);">※完成形のイメージです</span>
+                </div>
             </div>
             <p id="modal-description" class="text-sm leading-relaxed mb-4" style="color: var(--text-secondary);"></p>
             <div id="modal-required" class="hidden rounded-lg p-3 mb-4" style="background: var(--predicted-dim); border: 1px solid #a78bfa22;">
@@ -727,11 +730,19 @@
         const canvas = document.getElementById('modal-candle-canvas');
         drawModalCandles(canvas, p.name, p.signal);
 
+        // Candle note (show for predicted patterns)
+        const noteEl = document.getElementById('modal-candle-note');
+        if (p.type === 'predicted') {
+            noteEl.classList.remove('hidden');
+        } else {
+            noteEl.classList.add('hidden');
+        }
+
         // Required 3rd
         const reqEl = document.getElementById('modal-required');
         if (p.type === 'predicted' && p.required_third != null) {
             reqEl.classList.remove('hidden');
-            reqEl.querySelector('p').innerHTML = '必要な3日目の変化率: <span class="font-bold">' + p.required_third + '</span>';
+            reqEl.querySelector('p').innerHTML = '必要な3日目: <span class="font-bold">' + p.required_third + '</span>';
         } else {
             reqEl.classList.add('hidden');
         }
@@ -1200,8 +1211,11 @@
                             <p class="text-[11px] leading-relaxed" style="color: var(--text-muted);">${p.description || ''}</p>
                             ${requiredHtml}
                         </div>
-                        <canvas class="mini-candle flex-shrink-0 rounded" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"
-                                data-pattern="${p.name || ''}" data-signal="${p.signal || ''}"></canvas>
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                            <canvas class="mini-candle rounded" style="background: var(--bg-base); border: 1px solid var(--border-subtle);"
+                                    data-pattern="${p.name || ''}" data-signal="${p.signal || ''}"></canvas>
+                            ${p.type === 'predicted' ? '<span class="text-[9px] mt-0.5" style="color: var(--text-muted);">※完成形</span>' : ''}
+                        </div>
                     </div>
                 </div>
             `;
