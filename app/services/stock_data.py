@@ -1,8 +1,8 @@
-"""Stock data service for fetching OHLCV, short interest, and financial info."""
+"""Stock data service for fetching OHLCV, short interest, financial info, and news."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pandas as pd
 import pytz
@@ -139,13 +139,11 @@ def _calculate_atr(df: pd.DataFrame, period: int = 14) -> float | None:
     return sum(true_ranges[-period:]) / period
 
 
-def get_short_interest(ticker: str) -> ShortInterest | None:
-    """Fetch short interest data. Returns None if unavailable."""
-    from datetime import datetime
+def get_short_interest_from_info(info: dict) -> ShortInterest | None:
+    """Extract short interest data from a pre-fetched info dict.
 
-    t = yf.Ticker(ticker)
-    info = t.info
-
+    Returns None if all short interest fields are unavailable.
+    """
     short_pct = info.get("shortPercentOfFloat")
     short_ratio = info.get("shortRatio")
     shares_short = info.get("sharesShort")
@@ -178,6 +176,67 @@ def get_short_interest(ticker: str) -> ShortInterest | None:
         date_short_interest=date_si,
         date_short_prior_month=date_prior,
     )
+
+
+def get_short_interest(ticker: str) -> ShortInterest | None:
+    """Fetch short interest data. Returns None if unavailable."""
+    t = yf.Ticker(ticker)
+    info = t.info
+    return get_short_interest_from_info(info)
+
+
+def get_news(ticker: str, max_items: int = 5, days: int = 7) -> list[dict]:
+    """Fetch recent news for a ticker.
+
+    Args:
+        ticker: Stock ticker symbol.
+        max_items: Maximum number of news items to return.
+        days: Only include news published within this many days.
+
+    Returns list of dicts with keys: title, summary, pub_date, source, url.
+    Returns empty list if no news or on any exception.
+    """
+    try:
+        t = yf.Ticker(ticker)
+        raw_news = t.news
+
+        if not raw_news:
+            return []
+
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+        items: list[dict] = []
+
+        for item in raw_news:
+            content = item.get("content", {})
+            pub_date_str = content.get("pubDate", "")
+
+            # Parse and filter by date
+            try:
+                pub_dt = datetime.fromisoformat(pub_date_str)
+                if pub_dt.tzinfo is None:
+                    pub_dt = pub_dt.replace(tzinfo=UTC)
+                if pub_dt < cutoff:
+                    continue
+            except (ValueError, TypeError):
+                continue
+
+            items.append(
+                {
+                    "title": content.get("title", ""),
+                    "summary": content.get("summary", ""),
+                    "pub_date": pub_date_str,
+                    "source": content.get("provider", {}).get("displayName", ""),
+                    "url": content.get("canonicalUrl", {}).get("url", ""),
+                }
+            )
+
+        # Sort by pub_date descending (most recent first)
+        items.sort(key=lambda x: x["pub_date"], reverse=True)
+
+        return items[:max_items]
+
+    except Exception:
+        return []
 
 
 def get_financial_info(ticker: str) -> dict:

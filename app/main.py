@@ -9,6 +9,7 @@ from app.routers.analyze import router as analyze_router
 from app.routers.pattern_search import router as pattern_search_router
 from app.routers.risk import router as risk_router
 from app.routers.screener import router as screener_router
+from app.routers.trade_prompt import router as trade_prompt_router
 
 app = FastAPI(title="US Stock Candle Analysis")
 
@@ -16,6 +17,7 @@ app.include_router(analyze_router)
 app.include_router(risk_router)
 app.include_router(screener_router)
 app.include_router(pattern_search_router)
+app.include_router(trade_prompt_router)
 
 
 @app.get("/")
