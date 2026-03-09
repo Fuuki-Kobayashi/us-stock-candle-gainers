@@ -287,6 +287,30 @@
         </div>
     </div>
 
+    <!-- Trade Prompt Modal -->
+    <div id="tradePromptModal" class="modal-overlay" onclick="if(event.target===this)closeTradePromptModal()">
+        <div class="modal-content p-6" style="max-width: 720px; max-height: 90vh;">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--text-primary);">
+                    <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+                    </svg>
+                    AI Trade Prompt
+                </h2>
+                <div class="flex items-center gap-2">
+                    <span id="copyFeedback" class="text-xs font-medium opacity-0 transition-opacity duration-300" style="color: var(--green);">Copied!</span>
+                    <button id="copyPromptBtn" onclick="copyPrompt()" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style="background: var(--accent); color: var(--bg-base);">
+                        Copy
+                    </button>
+                    <button onclick="closeTradePromptModal()" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors" style="color: var(--text-muted);">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <pre id="tradePromptText" class="text-xs leading-relaxed overflow-auto rounded-lg p-4 font-mono whitespace-pre-wrap" style="background: var(--bg-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); max-height: 70vh;"></pre>
+        </div>
+    </div>
+
     <!-- Pattern Detail Modal -->
     <div id="pattern-modal" class="modal-overlay" onclick="if(event.target===this)closePatternModal()">
         <div class="modal-content p-6">
@@ -517,8 +541,16 @@
             <!-- Risk Analysis -->
             <div id="risk-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
 
-            <!-- Save Button -->
-            <div class="text-center pt-2 pb-8">
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-center gap-4 pt-2 pb-8">
+                <button id="tradePromptBtn" onclick="generateTradePrompt()" class="card px-8 py-3 text-sm font-medium cursor-pointer" style="color: var(--accent); border-color: var(--accent-muted);">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/>
+                        </svg>
+                        AI Trade Prompt
+                    </span>
+                </button>
                 <button id="save-btn" onclick="saveImage()" class="card px-8 py-3 text-sm font-medium cursor-pointer" style="color: var(--text-secondary);">
                     <span class="flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -794,7 +826,10 @@
 
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closePatternModal();
+        if (e.key === 'Escape') {
+            closePatternModal();
+            closeTradePromptModal();
+        }
     });
 
     function drawModalCandles(canvas, patternName, signal) {
@@ -1351,6 +1386,52 @@
         section.innerHTML =
             renderCat('財務健全性', 'var(--bullish)', riskData.financial_health) +
             renderCat('オファリングリスク', 'var(--bearish)', riskData.offering_risk);
+    }
+
+    // ============================================================
+    // SAVE IMAGE
+    // ============================================================
+    // ============================================================
+    // AI TRADE PROMPT
+    // ============================================================
+    async function generateTradePrompt() {
+        const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+        if (!ticker) { showError('ティッカーシンボルを入力してください'); return; }
+        const btn = document.getElementById('tradePromptBtn');
+        btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>生成中...</span>';
+        btn.style.pointerEvents = 'none';
+        try {
+            const res = await fetch('/trade-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'プロンプト生成に失敗しました');
+            }
+            const data = await res.json();
+            document.getElementById('tradePromptText').textContent = data.prompt;
+            document.getElementById('tradePromptModal').classList.add('active');
+            document.getElementById('copyFeedback').style.opacity = '0';
+        } catch (e) { showError(e.message); }
+        finally {
+            btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>AI Trade Prompt</span>';
+            btn.style.pointerEvents = 'auto';
+        }
+    }
+
+    function copyPrompt() {
+        const text = document.getElementById('tradePromptText').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.style.opacity = '1';
+            setTimeout(() => { feedback.style.opacity = '0'; }, 2000);
+        });
+    }
+
+    function closeTradePromptModal() {
+        document.getElementById('tradePromptModal').classList.remove('active');
     }
 
     // ============================================================

@@ -490,6 +490,49 @@ class TestFormatRiskSection:
         # Japanese levels should be translated
         assert "低" not in result
 
+    def test_format_risk_section_mixed_levels(self) -> None:
+        """Unit-06: FinancialHealth and OfferingRisk with mixed levels."""
+        from app.services.prompt_generator import _format_risk_section
+
+        fh = FinancialHealth(
+            de_ratio=RiskMetric(
+                name="D/E Ratio", value=0.5, level="低", description="d"
+            ),
+            current_ratio=RiskMetric(
+                name="Current Ratio", value=1.2, level="中", description="d"
+            ),
+            profit_margin=RiskMetric(
+                name="Profit Margin", value=-0.1, level="高", description="d"
+            ),
+            fcf=RiskMetric(name="FCF", value=1000000.0, level="低", description="d"),
+            overall_level="中",
+            summary="summary",
+        )
+        or_ = OfferingRisk(
+            cash_runway=RiskMetric(
+                name="Cash Runway", value=18.0, level="低", description="d"
+            ),
+            dilution=RiskMetric(
+                name="Dilution", value=1.0, level="中", description="d"
+            ),
+            net_income=RiskMetric(
+                name="Net Income", value=-500000.0, level="高", description="d"
+            ),
+            debt_cash_ratio=RiskMetric(
+                name="Debt/Cash", value=0.5, level="低", description="d"
+            ),
+            overall_level="高",
+            summary="summary",
+        )
+        result = _format_risk_section(fh, or_)
+        # Check metric names
+        assert "D/E" in result
+        assert "Current" in result or "current" in result.lower()
+        # Check English levels
+        assert "Low" in result
+        assert "Medium" in result
+        assert "High" in result
+
     def test_high_risk_translated(self) -> None:
         from app.services.prompt_generator import _format_risk_section
 
@@ -546,6 +589,29 @@ class TestFormatShortInterestSection:
         result = _format_short_interest_section(None)
         assert "Data not available" in result
 
+    def test_format_short_interest_section_with_all_values(self) -> None:
+        """Unit-07: ShortInterest with all fields present in output."""
+        from app.services.prompt_generator import _format_short_interest_section
+
+        si = ShortInterest(
+            short_percent_of_float=5.0,
+            short_ratio=2.0,
+            shares_short=500000,
+            shares_short_prior_month=450000,
+        )
+        result = _format_short_interest_section(si)
+        assert "5.0" in result or "5.00" in result
+        assert "2.0" in result or "2.00" in result
+        assert "500000" in result or "500,000" in result
+        assert "450000" in result or "450,000" in result
+
+    def test_format_short_interest_section_none(self) -> None:
+        """Unit-08: None input shows 'Data not available'."""
+        from app.services.prompt_generator import _format_short_interest_section
+
+        result = _format_short_interest_section(None)
+        assert "Data not available" in result
+
 
 # --- _format_news_section ---
 
@@ -568,6 +634,46 @@ class TestFormatNewsSection:
         assert "Stock rises" in result
 
     def test_empty_news(self) -> None:
+        from app.services.prompt_generator import _format_news_section
+
+        result = _format_news_section([])
+        assert "No recent news found" in result
+
+    def test_format_news_section_with_3_items(self) -> None:
+        """Unit-15: 3 news items - all titles, dates, sources present."""
+        from app.services.prompt_generator import _format_news_section
+
+        news = [
+            {
+                "title": "Q4 Earnings Beat",
+                "summary": "s1",
+                "pub_date": "2024-01-12T10:00:00Z",
+                "source": "Reuters",
+                "url": "https://example.com/1",
+            },
+            {
+                "title": "Expansion to Asia",
+                "summary": "s2",
+                "pub_date": "2024-01-11T08:00:00Z",
+                "source": "Bloomberg",
+                "url": "https://example.com/2",
+            },
+            {
+                "title": "Sector Rally",
+                "summary": "s3",
+                "pub_date": "2024-01-10T14:00:00Z",
+                "source": "CNBC",
+                "url": "https://example.com/3",
+            },
+        ]
+        result = _format_news_section(news)
+        for item in news:
+            assert item["title"] in result
+            assert item["pub_date"] in result or item["pub_date"][:10] in result
+            assert item["source"] in result
+
+    def test_format_news_section_empty(self) -> None:
+        """Unit-16: Empty list shows no-news message."""
         from app.services.prompt_generator import _format_news_section
 
         result = _format_news_section([])
@@ -601,6 +707,62 @@ class TestFormatInstructions:
 
         result = _format_instructions()
         assert "Stop Loss" in result
+
+    def test_format_instructions_contains_required_sections(self) -> None:
+        """Unit-12: Instructions contain all required output section terms."""
+        from app.services.prompt_generator import _format_instructions
+
+        result = _format_instructions()
+        required_terms = [
+            "Direction",
+            "Entry Price",
+            "TP1",
+            "TP2",
+            "TP3",
+            "Stop Loss",
+            "Catalyst Assessment",
+            "Theme Strength",
+            "Trade Rationale Summary",
+        ]
+        for term in required_terms:
+            assert term in result, f"Missing required term: {term}"
+
+
+# --- Risk level translation (Unit-17) ---
+
+
+class TestRiskLevelTranslation:
+    def test_risk_level_translation_japanese_to_english(self) -> None:
+        """Unit-17: Japanese levels translated to English; originals absent."""
+        from app.services.prompt_generator import _format_risk_section
+
+        fh = FinancialHealth(
+            de_ratio=RiskMetric(name="D/E", value=0.5, level="低", description="d"),
+            current_ratio=RiskMetric(name="CR", value=1.8, level="中", description="d"),
+            profit_margin=RiskMetric(name="PM", value=0.2, level="高", description="d"),
+            fcf=RiskMetric(name="FCF", value=1e6, level="低", description="d"),
+            overall_level="中",
+            summary="test",
+        )
+        or_ = OfferingRisk(
+            cash_runway=RiskMetric(name="CR", value=18.0, level="低", description="d"),
+            dilution=RiskMetric(name="DI", value=1.0, level="中", description="d"),
+            net_income=RiskMetric(name="NI", value=-5e5, level="高", description="d"),
+            debt_cash_ratio=RiskMetric(
+                name="DC", value=0.5, level="低", description="d"
+            ),
+            overall_level="高",
+            summary="test",
+        )
+        result = _format_risk_section(fh, or_)
+        # English levels must be present
+        assert "Low" in result
+        assert "Medium" in result
+        assert "High" in result
+        # Japanese levels must NOT be present
+        assert "\u4f4e" not in result  # 低
+        assert "\u4e2d" not in result  # 中
+        assert "\u9ad8" not in result  # 高
 
 
 # --- _assemble_prompt ---
@@ -716,6 +878,268 @@ class TestGenerateTradePrompt:
             result = await generate_trade_prompt("AAPL")
             assert isinstance(result, str)
             assert "No recent news found" in result
+
+    @pytest.mark.asyncio
+    async def test_generate_trade_prompt_orchestration(self) -> None:
+        """Unit-18: All section headers present in orchestrated prompt."""
+        from app.services.prompt_generator import generate_trade_prompt
+
+        candles = [
+            CandleData(
+                date="2024-01-10",
+                open=100.0,
+                high=105.0,
+                low=98.0,
+                close=103.0,
+                volume=1000000,
+            ),
+            CandleData(
+                date="2024-01-11",
+                open=103.0,
+                high=108.0,
+                low=101.0,
+                close=106.0,
+                volume=1100000,
+            ),
+            CandleData(
+                date="2024-01-12",
+                open=106.0,
+                high=110.0,
+                low=104.0,
+                close=109.0,
+                volume=1200000,
+            ),
+        ]
+        patterns = [
+            PatternResult(
+                type="confirmed",
+                name="Morning Star",
+                signal="Bullish",
+                description="Rev",
+                direction="bullish",
+                pattern_id="morning_star",
+                pattern_candle_count=3,
+            ),
+        ]
+        fh = FinancialHealth(
+            de_ratio=RiskMetric(name="D/E", value=0.5, level="低", description="d"),
+            current_ratio=RiskMetric(name="CR", value=2.0, level="低", description="d"),
+            profit_margin=RiskMetric(name="PM", value=0.2, level="低", description="d"),
+            fcf=RiskMetric(name="FCF", value=1e6, level="低", description="d"),
+            overall_level="低",
+            summary="s",
+        )
+        or_ = OfferingRisk(
+            cash_runway=RiskMetric(name="CR", value=36.0, level="低", description="d"),
+            dilution=RiskMetric(name="DI", value=0.0, level="低", description="d"),
+            net_income=RiskMetric(name="NI", value=1e5, level="低", description="d"),
+            debt_cash_ratio=RiskMetric(
+                name="DC", value=0.5, level="低", description="d"
+            ),
+            overall_level="低",
+            summary="s",
+        )
+        si = ShortInterest(
+            short_percent_of_float=5.0,
+            short_ratio=2.0,
+            shares_short=500000,
+            shares_short_prior_month=450000,
+        )
+        news = [
+            {
+                "title": "Good news",
+                "summary": "s",
+                "pub_date": "2024-01-12",
+                "source": "Reuters",
+                "url": "http://x.com",
+            },
+        ]
+
+        with (
+            patch(
+                "app.services.prompt_generator.validate_ticker", return_value=MOCK_INFO
+            ),
+            patch(
+                "app.services.prompt_generator.get_ohlcv", return_value=(candles, 1.5)
+            ),
+            patch("app.services.prompt_generator.get_news", return_value=news),
+            patch(
+                "app.services.prompt_generator.detect_patterns", return_value=patterns
+            ),
+            patch("app.services.prompt_generator.analyze_risk", return_value=(fh, or_)),
+            patch(
+                "app.services.prompt_generator.get_short_interest_from_info",
+                return_value=si,
+            ),
+        ):
+            result = await generate_trade_prompt("TEST")
+
+        expected_sections = [
+            "Company Profile",
+            "Technical Data",
+            "Financial Health",
+            "Offering Risk",
+            "Short Interest",
+            "Recent News",
+            "Instructions",
+        ]
+        for section in expected_sections:
+            assert section in result, f"Missing section: {section}"
+
+    @pytest.mark.asyncio
+    async def test_generate_trade_prompt_news_failure_graceful(self) -> None:
+        """Unit-19: News failure handled gracefully, prompt still generated."""
+        from app.services.prompt_generator import generate_trade_prompt
+
+        candles = [
+            CandleData(
+                date="2024-01-10",
+                open=100.0,
+                high=105.0,
+                low=98.0,
+                close=103.0,
+                volume=1000000,
+            ),
+            CandleData(
+                date="2024-01-11",
+                open=103.0,
+                high=108.0,
+                low=101.0,
+                close=106.0,
+                volume=1100000,
+            ),
+            CandleData(
+                date="2024-01-12",
+                open=106.0,
+                high=110.0,
+                low=104.0,
+                close=109.0,
+                volume=1200000,
+            ),
+        ]
+        fh = FinancialHealth(
+            de_ratio=RiskMetric(name="D/E", value=0.5, level="低", description="d"),
+            current_ratio=RiskMetric(name="CR", value=2.0, level="低", description="d"),
+            profit_margin=RiskMetric(name="PM", value=0.2, level="低", description="d"),
+            fcf=RiskMetric(name="FCF", value=1e6, level="低", description="d"),
+            overall_level="低",
+            summary="s",
+        )
+        or_ = OfferingRisk(
+            cash_runway=RiskMetric(name="CR", value=36.0, level="低", description="d"),
+            dilution=RiskMetric(name="DI", value=0.0, level="低", description="d"),
+            net_income=RiskMetric(name="NI", value=1e5, level="低", description="d"),
+            debt_cash_ratio=RiskMetric(
+                name="DC", value=0.5, level="低", description="d"
+            ),
+            overall_level="低",
+            summary="s",
+        )
+        si = ShortInterest(
+            short_percent_of_float=5.0,
+            short_ratio=2.0,
+            shares_short=500000,
+            shares_short_prior_month=450000,
+        )
+
+        with (
+            patch(
+                "app.services.prompt_generator.validate_ticker", return_value=MOCK_INFO
+            ),
+            patch(
+                "app.services.prompt_generator.get_ohlcv", return_value=(candles, 1.5)
+            ),
+            patch(
+                "app.services.prompt_generator.get_news",
+                side_effect=Exception("News API down"),
+            ),
+            patch("app.services.prompt_generator.detect_patterns", return_value=[]),
+            patch("app.services.prompt_generator.analyze_risk", return_value=(fh, or_)),
+            patch(
+                "app.services.prompt_generator.get_short_interest_from_info",
+                return_value=si,
+            ),
+        ):
+            result = await generate_trade_prompt("TEST")
+
+        assert result is not None
+        assert "No recent news found" in result
+
+    @pytest.mark.asyncio
+    async def test_generate_trade_prompt_partial_info_fields(self) -> None:
+        """Unit-20: Minimal info produces prompt with N/A for missing fields."""
+        from app.services.prompt_generator import generate_trade_prompt
+
+        minimal_info = {"quoteType": "EQUITY", "shortName": "Minimal Corp"}
+        candles = [
+            CandleData(
+                date="2024-01-10",
+                open=100.0,
+                high=105.0,
+                low=98.0,
+                close=103.0,
+                volume=1000000,
+            ),
+            CandleData(
+                date="2024-01-11",
+                open=103.0,
+                high=108.0,
+                low=101.0,
+                close=106.0,
+                volume=1100000,
+            ),
+            CandleData(
+                date="2024-01-12",
+                open=106.0,
+                high=110.0,
+                low=104.0,
+                close=109.0,
+                volume=1200000,
+            ),
+        ]
+        fh = FinancialHealth(
+            de_ratio=RiskMetric(name="D/E", value=None, level="中", description="d"),
+            current_ratio=RiskMetric(
+                name="CR", value=None, level="中", description="d"
+            ),
+            profit_margin=RiskMetric(
+                name="PM", value=None, level="中", description="d"
+            ),
+            fcf=RiskMetric(name="FCF", value=None, level="中", description="d"),
+            overall_level="中",
+            summary="s",
+        )
+        or_ = OfferingRisk(
+            cash_runway=RiskMetric(name="CR", value=None, level="中", description="d"),
+            dilution=RiskMetric(name="DI", value=None, level="中", description="d"),
+            net_income=RiskMetric(name="NI", value=None, level="中", description="d"),
+            debt_cash_ratio=RiskMetric(
+                name="DC", value=None, level="中", description="d"
+            ),
+            overall_level="中",
+            summary="s",
+        )
+
+        with (
+            patch(
+                "app.services.prompt_generator.validate_ticker",
+                return_value=minimal_info,
+            ),
+            patch(
+                "app.services.prompt_generator.get_ohlcv", return_value=(candles, 1.5)
+            ),
+            patch("app.services.prompt_generator.get_news", return_value=[]),
+            patch("app.services.prompt_generator.detect_patterns", return_value=[]),
+            patch("app.services.prompt_generator.analyze_risk", return_value=(fh, or_)),
+            patch(
+                "app.services.prompt_generator.get_short_interest_from_info",
+                return_value=None,
+            ),
+        ):
+            result = await generate_trade_prompt("TEST")
+
+        assert result is not None
+        assert "N/A" in result
 
 
 # --- Router tests ---
