@@ -34,3 +34,5 @@ class ShortInterest(BaseModel):
     short_ratio: float | None = None
     shares_short: int | None = None
     shares_short_prior_month: int | None = None
+    date_short_interest: str | None = None  # YYYY-MM-DD of current report
+    date_short_prior_month: str | None = None  # YYYY-MM-DD of prior month report

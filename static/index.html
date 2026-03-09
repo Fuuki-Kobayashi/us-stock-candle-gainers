@@ -1153,6 +1153,12 @@
     // ============================================================
     // SHORT INTEREST
     // ============================================================
+    function formatDateJP(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr + 'T00:00:00Z');
+        return `${d.getUTCFullYear()}/${d.getUTCMonth()+1}/${d.getUTCDate()}`;
+    }
+
     function renderShortInterest(si, atr) {
         const grid = document.getElementById('short-interest-grid');
         const atrSection = document.getElementById('atr-section');
@@ -1167,22 +1173,35 @@
         let risk = '低';
         if (pct != null) { if (pct >= 20) risk = '高'; else if (pct >= 10) risk = '中'; }
 
+        const dateLabel = si.date_short_interest ? formatDateJP(si.date_short_interest) + ' 時点' : '';
+        const priorDateLabel = si.date_short_prior_month ? formatDateJP(si.date_short_prior_month) + ' 時点' : '';
+
         const metrics = [
-            { label: '浮動株空売り比率', value: pct != null ? pct.toFixed(1)+'%' : 'N/A', badge: pct != null ? riskBadge(risk) : '' },
-            { label: 'ショートレシオ', value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A', badge: '' },
-            { label: '空売り株数', value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A', badge: '' },
-            { label: '前月空売り株数', value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A', badge: '' },
+            { label: '浮動株空売り比率', value: pct != null ? pct.toFixed(1)+'%' : 'N/A', badge: pct != null ? riskBadge(risk) : '', hint: '浮動株に対する空売り残高の割合。20%超でショートスクイーズリスク' },
+            { label: 'ショートレシオ', value: si.short_ratio != null ? si.short_ratio.toFixed(2) : 'N/A', badge: '', hint: '空売り残高 / 1日平均出来高。ポジション解消に要する日数' },
+            { label: '空売り株数', value: si.shares_short != null ? formatNumber(si.shares_short) : 'N/A', badge: '', hint: '現在の空売り残高（株数）' },
+            { label: '前月空売り株数', value: si.shares_short_prior_month != null ? formatNumber(si.shares_short_prior_month) : 'N/A', badge: '', hint: priorDateLabel ? priorDateLabel + 'の空売り残高' : '前回報告日の空売り残高' },
         ];
 
-        grid.innerHTML = metrics.map((m, i) => `
+        let html = '';
+
+        // Report date header
+        if (dateLabel) {
+            html += `<p class="text-[10px] font-mono mb-2" style="color: var(--text-muted); letter-spacing: 0.05em;">FINRA報告: ${dateLabel}（月1回更新）</p>`;
+        }
+
+        html += metrics.map((m, i) => `
             <div class="metric-card animate-reveal" style="animation-delay:${0.1+i*0.05}s;">
-                <p class="text-[10px] font-semibold tracking-wider uppercase mb-2" style="color: var(--text-muted);">${m.label}</p>
+                <p class="text-[10px] font-semibold tracking-wider uppercase mb-1" style="color: var(--text-muted);">${m.label}</p>
+                <p class="text-[9px] mb-2" style="color: var(--text-muted); opacity: 0.7;">${m.hint}</p>
                 <div class="flex items-center gap-2">
                     <p class="text-lg font-bold font-mono" style="color: var(--text-primary);">${m.value}</p>
                     ${m.badge}
                 </div>
             </div>
         `).join('');
+
+        grid.innerHTML = html;
 
         atrSection.innerHTML = atr != null ? `
             <div class="flex items-center justify-between">

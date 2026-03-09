@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pandas as pd
 import pytz
@@ -141,6 +141,8 @@ def _calculate_atr(df: pd.DataFrame, period: int = 14) -> float | None:
 
 def get_short_interest(ticker: str) -> ShortInterest | None:
     """Fetch short interest data. Returns None if unavailable."""
+    from datetime import datetime
+
     t = yf.Ticker(ticker)
     info = t.info
 
@@ -154,11 +156,27 @@ def get_short_interest(ticker: str) -> ShortInterest | None:
     ):
         return None
 
+    # Convert epoch seconds to YYYY-MM-DD
+    date_si_epoch = info.get("dateShortInterest")
+    date_prior_epoch = info.get("sharesShortPreviousMonthDate")
+    date_si = (
+        datetime.fromtimestamp(date_si_epoch, tz=UTC).strftime("%Y-%m-%d")
+        if date_si_epoch
+        else None
+    )
+    date_prior = (
+        datetime.fromtimestamp(date_prior_epoch, tz=UTC).strftime("%Y-%m-%d")
+        if date_prior_epoch
+        else None
+    )
+
     return ShortInterest(
         short_percent_of_float=short_pct * 100 if short_pct is not None else None,
         short_ratio=short_ratio,
         shares_short=shares_short,
         shares_short_prior_month=shares_short_prior,
+        date_short_interest=date_si,
+        date_short_prior_month=date_prior,
     )
 
 
