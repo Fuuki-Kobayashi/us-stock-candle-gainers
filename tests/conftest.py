@@ -1,7 +1,10 @@
 """Shared test fixtures for the candlestick pattern tool."""
 
+from collections.abc import Sequence
+
 import pandas as pd
 import pytest
+from _pytest.nodes import Item
 
 from app.models.candle import CandleData
 
@@ -237,6 +240,21 @@ def sample_flat_candles() -> list[CandleData]:
             volume=500000,
         ),
     ]
+
+
+def pytest_collection_modifyitems(items: list[Item]) -> None:
+    """Run Playwright E2E tests after async/unit tests.
+
+    The combined suite becomes unstable when sync Playwright fixtures run before
+    pytest-asyncio tests in the same invocation.
+    """
+    items.sort(key=_e2e_sort_key)
+
+
+def _e2e_sort_key(item: Item) -> tuple[int, Sequence[str]]:
+    """Push e2e-marked tests to the end while keeping stable ordering otherwise."""
+    is_e2e = 1 if item.get_closest_marker("e2e") else 0
+    return (is_e2e, item.nodeid.split("::"))
 
 
 @pytest.fixture
