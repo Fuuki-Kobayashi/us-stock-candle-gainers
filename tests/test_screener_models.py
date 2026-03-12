@@ -57,9 +57,8 @@ class TestScreenerRequest:
 
 class TestTickerScanResult:
     def test_ticker_scan_result_with_patterns(self) -> None:
-        from app.models.screener import TickerScanResult
-
         from app.models.candle import CandleData, PatternResult
+        from app.models.screener import TickerScanResult
 
         candle = CandleData(
             date="2024-01-15",

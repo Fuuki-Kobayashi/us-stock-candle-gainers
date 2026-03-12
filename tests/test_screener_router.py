@@ -281,7 +281,9 @@ class TestScreenerPartialSuccess:
 
         call_count = 0
 
-        def ohlcv_side_effect(ticker: str, candle_count: int = 3) -> tuple:
+        def ohlcv_side_effect(
+            ticker: str, candle_count: int = 3, confirmed_only: bool = False
+        ) -> tuple:
             nonlocal call_count
             call_count += 1
             if call_count == 2:

@@ -3,9 +3,9 @@
 from unittest.mock import patch
 
 import pytest
-from app.services.pattern_search_service import search_patterns
 
 from app.models.candle import CandleData, PatternResult
+from app.services.pattern_search_service import search_patterns
 
 
 def _make_candle(open_: float, high: float, low: float, close: float) -> CandleData:
