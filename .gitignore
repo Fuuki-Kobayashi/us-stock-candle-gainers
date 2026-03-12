@@ -27,3 +27,5 @@ ENV/
 .DS_Store
 .spec-workflow/
 .mcp.json
+test-results/
+playwright-report/
